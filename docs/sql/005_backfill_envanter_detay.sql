@@ -1,0 +1,40 @@
+-- Bu dosya yalnizca eski hedef semada satin alma kolonlari ENVANTER uzerindeyse calistirilir.
+-- Yeni sema kurulumunda ENVANTER_DETAY dogrudan olustugu icin bu dosya calistirilmaz.
+
+INSERT INTO ENVANTER_DETAY (
+    GUID,
+    ALIM_YOLU,
+    ALIM_TURU,
+    SAYMANLIK_NO,
+    IHALEGUID,
+    FIRMAGUID,
+    GARANTI_BASLANGIC_TARIHI,
+    GARANTI_BITIS_TARIHI
+)
+SELECT
+    e.GUID,
+    e.ALIM_YOLU,
+    e.ALIM_TURU,
+    e.SAYMANLIK_NO,
+    e.IHALEGUID,
+    e.FIRMAGUID,
+    e.GARANTI_BASLANGIC_TARIHI,
+    e.GARANTI_BITIS_TARIHI
+FROM ENVANTER e
+WHERE e.GUID IS NOT NULL
+  AND (
+      e.ALIM_YOLU IS NOT NULL
+      OR e.ALIM_TURU IS NOT NULL
+      OR e.SAYMANLIK_NO IS NOT NULL
+      OR e.IHALEGUID IS NOT NULL
+      OR e.FIRMAGUID IS NOT NULL
+      OR e.GARANTI_BASLANGIC_TARIHI IS NOT NULL
+      OR e.GARANTI_BITIS_TARIHI IS NOT NULL
+  )
+  AND NOT EXISTS (
+      SELECT 1
+      FROM ENVANTER_DETAY ed
+      WHERE ed.GUID = e.GUID
+  );
+
+COMMIT;

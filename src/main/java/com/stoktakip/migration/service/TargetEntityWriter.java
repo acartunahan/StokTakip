@@ -70,7 +70,7 @@ public class TargetEntityWriter {
     private static void kaynakAlanlariUygula(LegacyRow row, Object entity) {
         alanDegeriYaz(entity, "id", row.id());
         alanDegeriYaz(entity, "guid", entityGuid(row));
-        alanDegeriYaz(entity, "olusturmaTarihi", row.dateTime("K_TARIH"));
+        alanDegeriYaz(entity, "olusturmaTarihi", row.dateTime(olusturmaTarihiKolonu(row)));
         if (row.string("DURUM") != null) {
             alanDegeriYaz(entity, "durum", LegacyFlagMapper.durum(row.string("DURUM")));
         } else if (row.string("AKTIF") != null) {
@@ -86,6 +86,15 @@ public class TargetEntityWriter {
             return guid;
         }
         return row.anahtar();
+    }
+
+    private static String olusturmaTarihiKolonu(LegacyRow row) {
+        return switch (row.tabloTanimi()) {
+            case R_SAYIM_GENEL -> "TARIH";
+            case R_SAYIM_YEREL -> "ITARIH";
+            case R_IADE_HAVUZU, R_IADE_ONAY_HAVUZU, SARF_LOG -> "TARIH";
+            default -> "K_TARIH";
+        };
     }
 
     private static String stringAlanDegeri(Object entity, String alanAdi) {

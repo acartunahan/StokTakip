@@ -3,9 +3,9 @@ package com.stoktakip.migration.core;
 public enum LegacyTableSpec {
     RESAT_DEPO("RESAT_DEPO", "ID", "GUID", "ID"),
     RESAT_MARKA("RESAT_MARKA", "ID", "GUID", "ID"),
-    SARF_MARKA("SARF_MARKA", null, "GUID", "GUID"),
+    SARF_MARKA("SARF_MARKA", null, "ID", "ID"),
     RESAT_MODEL("RESAT_MODEL", "ID", "GUID", "ID"),
-    SARF_MODEL("SARF_MODEL", null, "GUID", "GUID"),
+    SARF_MODEL("SARF_MODEL", null, "GID", "GID"),
     RESAT_FIRMA("RESAT_FIRMA", "ID", "GUID", "ID"),
     SARF_FIRMA("SARF_FIRMA", null, "GUID", "GUID"),
     RESAT_IHALE("RESAT_IHALE", "ID", "GUID", "ID"),
@@ -19,11 +19,11 @@ public enum LegacyTableSpec {
     R_BARKOD("R_BARKOD", "ID", null, "ID"),
     R_DEMIRBAS_ACIKLAMA("R_DEMIRBAS_ACIKLAMA", "ID", null, "ID"),
     R_HAREKET("R_HAREKET", "ID", null, "ID"),
-    R_SAYIM("R_SAYIM", null, "GUID", "GUID"),
-    R_SAYIM_GENEL("R_SAYIM_GENEL", null, null, "R_SAYIMGUID"),
-    R_SAYIM_YEREL("R_SAYIM_YEREL", null, null, "R_SAYIMGUID"),
+    R_SAYIM("R_SAYIM", null, "ID", "ID"),
+    R_SAYIM_GENEL("R_SAYIM_GENEL", null, null, "SAYIM"),
+    R_SAYIM_YEREL("R_SAYIM_YEREL", null, null, "SAYIM"),
     R_IADE_HAVUZU("R_IADE_HAVUZU", "ID", null, "ID"),
-    R_IADE_ONAY_HAVUZU("R_IADE_ONAY_HAVUZU", null, null, "R_DEMIRBASGUID"),
+    R_IADE_ONAY_HAVUZU("R_IADE_ONAY_HAVUZU", null, null, "MALZEME"),
     SARF_LOG("SARF_LOG", "ID", null, "ID"),
     R_SQL_KAYIT("R_SQL_KAYIT", "ID", "GUID", "ID");
 

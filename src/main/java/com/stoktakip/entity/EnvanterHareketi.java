@@ -75,8 +75,12 @@ public class EnvanterHareketi {
     private String ad;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "DEPOGUID", referencedColumnName = "GUID")
-    private Depo depo;
+    @JoinColumn(name = "NERDEN", referencedColumnName = "GUID")
+    private Depo neredenDepo;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "NEREYE", referencedColumnName = "GUID")
+    private Depo nereyeDepo;
 
     @Column(name = "PERSONEL_KODU", length = 50)
     private String personelKodu;
@@ -112,12 +116,20 @@ public class EnvanterHareketi {
         this.ad = ad;
     }
 
-    public Depo getDepo() {
-        return depo;
+    public Depo getNeredenDepo() {
+        return neredenDepo;
     }
 
-    public void setDepo(Depo depo) {
-        this.depo = depo;
+    public void setNeredenDepo(Depo neredenDepo) {
+        this.neredenDepo = neredenDepo;
+    }
+
+    public Depo getNereyeDepo() {
+        return nereyeDepo;
+    }
+
+    public void setNereyeDepo(Depo nereyeDepo) {
+        this.nereyeDepo = nereyeDepo;
     }
 
     public String getPersonelKodu() {

@@ -6,7 +6,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Table;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import java.time.LocalDateTime;
 
 @Entity
@@ -74,6 +77,10 @@ public class Sayim {
     @Column(name = "ESKI_DURUM_KODU")
     private Long eskiDurumKodu;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "DEPO", referencedColumnName = "GUID")
+    private Depo depo;
+
     public SayimKapsami getSayimKapsami() {
         return sayimKapsami;
     }
@@ -112,5 +119,13 @@ public class Sayim {
 
     public void setEskiDurumKodu(Long eskiDurumKodu) {
         this.eskiDurumKodu = eskiDurumKodu;
+    }
+
+    public Depo getDepo() {
+        return depo;
+    }
+
+    public void setDepo(Depo depo) {
+        this.depo = depo;
     }
 }

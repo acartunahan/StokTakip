@@ -11,8 +11,8 @@ class LegacyRowTest {
     @Test
     void anahtarOnceGuidSonraIdSonraSatirHashKullanir() {
         LegacyRow idRow = new LegacyRow(LegacyTableSpec.RESAT_DEPO, Map.of("ID", BigDecimal.TEN, "GUID", "abc-guid"));
-        LegacyRow guidRow = new LegacyRow(LegacyTableSpec.SARF_MARKA, Map.of("GUID", "brand-guid"));
-        LegacyRow syntheticRow = new LegacyRow(LegacyTableSpec.R_SAYIM_GENEL, Map.of("R_SAYIMGUID", "sayim"))
+        LegacyRow guidRow = new LegacyRow(LegacyTableSpec.SARF_MARKA, Map.of("ID", "brand-guid"));
+        LegacyRow syntheticRow = new LegacyRow(LegacyTableSpec.R_SAYIM_GENEL, Map.of("SAYIM", "sayim"))
             .withSyntheticGuid("sayim|demirbas");
 
         assertThat(idRow.anahtar()).isEqualTo("GUID:abc-guid");

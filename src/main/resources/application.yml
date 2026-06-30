@@ -9,7 +9,7 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.OracleDialect
@@ -24,7 +24,7 @@ app:
     dry-run: true
     chunk-size: 500
     legacy-datasource:
-      url: ${LEGACY_DB_URL:jdbc:oracle:thin:@//localhost:1521/LEGACYPDB}
+      url: ${LEGACY_DB_URL:jdbc:oracle:thin:@//localhost:1522/FREEPDB1}
       username: ${LEGACY_DB_USERNAME:legacy_readonly}
       password: ${LEGACY_DB_PASSWORD:legacy_readonly}
       driver-class-name: oracle.jdbc.OracleDriver

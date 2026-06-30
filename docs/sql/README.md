@@ -17,20 +17,26 @@ Legacy test verisi icin:
 1. `007_create_legacy_test_schema.sql`: Sadece bos/local legacy test semasinda minimal kaynak tablolarini olusturur. Gercek legacy DB'de calistirilmaz.
 2. `008_seed_legacy_test_data.sql`: Migration'i test etmek icin tum legacy kaynak tablolarina iliskili demo veri basar. Tekrar calistirilabilir `MERGE` ifadeleri kullanir.
 
-Docker Compose ile gelen local Oracle legacy container'inda calistirma ornegi:
+Docker Compose ile gelen local Oracle container'larini ayaga kaldirma:
 
-```powershell
+```bash
 docker compose up -d oracle-legacy oracle-target
-Get-Content docs\sql\007_create_legacy_test_schema.sql | docker exec -i oracle-legacy sqlplus -S legacy_readonly/legacy_readonly@//localhost:1521/FREEPDB1
-Get-Content docs\sql\008_seed_legacy_test_data.sql | docker exec -i oracle-legacy sqlplus -S legacy_readonly/legacy_readonly@//localhost:1521/FREEPDB1
 ```
 
-Migration'i kuru calistirmak icin:
+Legacy test semasina tablo ve demo veri basma:
 
-```powershell
-$env:APP_MIGRATION_ENABLED="true"
-$env:APP_MIGRATION_DRY_RUN="true"
-& "C:\Program Files\JetBrains\IntelliJ IDEA 2025.3.1.1\plugins\maven\lib\maven3\bin\mvn.cmd" spring-boot:run
+```bash
+cat docs/sql/007_create_legacy_test_schema.sql | docker exec -i oracle-legacy sqlplus -S legacy_readonly/legacy_readonly@//localhost:1521/FREEPDB1
+cat docs/sql/008_seed_legacy_test_data.sql | docker exec -i oracle-legacy sqlplus -S legacy_readonly/legacy_readonly@//localhost:1521/FREEPDB1
 ```
 
-Hedef DB'ye gercek yazmak icin `APP_MIGRATION_DRY_RUN` degerini `"false"` yap.
+Not: `docker exec` container icinden calistigi icin legacy baglantisinda `1521` kullanilir. Uygulama Ubuntu host'undan baglanirken legacy host portu `1522`, hedef stoktakip host portu `1521` olmalidir.
+
+Migration'i hedef DB'ye gercek yazacak sekilde calistirma:
+
+```bash
+mvn spring-boot:run \
+  -Dspring-boot.run.arguments="--spring.main.web-application-type=none --app.migration.enabled=true --app.migration.dry-run=false --spring.datasource.url=jdbc:oracle:thin:@//localhost:1521/FREEPDB1 --spring.datasource.username=stoktakip --spring.datasource.password=stoktakip --app.migration.legacy-datasource.url=jdbc:oracle:thin:@//localhost:1522/FREEPDB1 --app.migration.legacy-datasource.username=legacy_readonly --app.migration.legacy-datasource.password=legacy_readonly"
+```
+
+Logda hedef datasource icin `user=STOKTAKIP`, legacy datasource icin `user=LEGACY_READONLY` gorulmeli. Hedef datasource `LEGACY_READONLY` cikarsa migration durdurulur.

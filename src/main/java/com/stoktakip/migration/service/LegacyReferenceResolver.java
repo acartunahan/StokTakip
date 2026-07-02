@@ -1,7 +1,7 @@
 package com.stoktakip.migration.service;
 
 import com.stoktakip.entity.Marka;
-import com.stoktakip.entity.OrtakKategori;
+import com.stoktakip.entity.Kategori;
 import com.stoktakip.entity.Firma;
 import com.stoktakip.entity.TuketimCinsi;
 import com.stoktakip.entity.Depo;
@@ -18,7 +18,7 @@ import com.stoktakip.repository.DepoRepository;
 import com.stoktakip.repository.EnvanterRepository;
 import com.stoktakip.repository.LegacyAwareRepository;
 import com.stoktakip.repository.ModelRepository;
-import com.stoktakip.repository.OrtakKategoriRepository;
+import com.stoktakip.repository.KategoriRepository;
 import com.stoktakip.repository.SayimRepository;
 import com.stoktakip.repository.IhaleRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -34,7 +34,7 @@ public class LegacyReferenceResolver {
     private final FirmaRepository firmaRepository;
     private final IhaleRepository ihaleRepository;
     private final TuketimCinsiRepository tuketimCinsiRepository;
-    private final OrtakKategoriRepository ortakKategoriRepository;
+    private final KategoriRepository kategoriRepository;
     private final EnvanterRepository envanterRepository;
     private final SayimRepository sayimRepository;
     private final MigrationAuditService denetimServisi;
@@ -46,7 +46,7 @@ public class LegacyReferenceResolver {
         FirmaRepository firmaRepository,
         IhaleRepository ihaleRepository,
         TuketimCinsiRepository tuketimCinsiRepository,
-        OrtakKategoriRepository ortakKategoriRepository,
+        KategoriRepository kategoriRepository,
         EnvanterRepository envanterRepository,
         SayimRepository sayimRepository,
         MigrationAuditService denetimServisi
@@ -57,7 +57,7 @@ public class LegacyReferenceResolver {
         this.firmaRepository = firmaRepository;
         this.ihaleRepository = ihaleRepository;
         this.tuketimCinsiRepository = tuketimCinsiRepository;
-        this.ortakKategoriRepository = ortakKategoriRepository;
+        this.kategoriRepository = kategoriRepository;
         this.envanterRepository = envanterRepository;
         this.sayimRepository = sayimRepository;
         this.denetimServisi = denetimServisi;
@@ -95,16 +95,16 @@ public class LegacyReferenceResolver {
         return coz(context, row, column, "RESAT_IHALE", row.string(column), ihaleRepository);
     }
 
-    public OrtakKategori sabitKod(MigrationContext context, LegacyRow row, String column) {
-        return coz(context, row, column, "RESAT_SABIT_KOD", row.string(column), ortakKategoriRepository);
+    public Kategori sabitKod(MigrationContext context, LegacyRow row, String column) {
+        return coz(context, row, column, "RESAT_SABIT_KOD", row.string(column), kategoriRepository);
     }
 
     public TuketimCinsi tuketimCinsi(MigrationContext context, LegacyRow row, String column) {
         return coz(context, row, column, "R_TUKETIMCINSLERI", row.string(column), tuketimCinsiRepository);
     }
 
-    public OrtakKategori category(MigrationContext context, LegacyRow row, String column) {
-        return coz(context, row, column, "SARF_KATEGORI", row.string(column), ortakKategoriRepository);
+    public Kategori category(MigrationContext context, LegacyRow row, String column) {
+        return coz(context, row, column, "SARF_KATEGORI", row.string(column), kategoriRepository);
     }
 
     public Envanter inventory(MigrationContext context, LegacyRow row, String column) {

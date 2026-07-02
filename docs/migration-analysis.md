@@ -22,10 +22,10 @@ Eski sistemde foreign key constraint olmadığı için ilişkiler GUID kolonlar�
 - `Firma`: `RESAT_FIRMA`, `SARF_FIRMA`
 - `Ihale`: `RESAT_IHALE`
 - `TuketimCinsi`: `R_TUKETIMCINSLERI`
-- `OrtakKategori`: `RESAT_SABIT_KOD`, `SARF_KATEGORI`
+- `Kategori`: `RESAT_SABIT_KOD`, `SARF_KATEGORI`
 - `Envanter`: `R_DEMIRBAS`, `R_SARFDEMIRBAS`
 - `EnvanterDetay`: Envanter ile ayni `GUID` uzerinden bire bir baglanan satin alma detaylari
-- `Aparat`, `EnvanterResim`, `EnvanterBarkod`, `EnvanterAciklama`, `EnvanterHareketi`
+- `Aparat`, `EnvanterResim`, `EnvanterBarkod`, `EnvanterAciklama`, `DepoZimmetHareket`, `PersonelZimmetHareket`
 - `Sayim`, `SayimDetay`
 - `IadeHavuzKaydi`, `IadeOnayKaydi`
 - `SarfLogKaydi`, `SqlKaydi`
@@ -40,17 +40,17 @@ Eski sistemde foreign key constraint olmadığı için ilişkiler GUID kolonlar�
 | RESAT_MODEL, SARF_MODEL | Model | Parent/self relation desteklenir |
 | RESAT_FIRMA, SARF_FIRMA | Firma | Tek firma modeli |
 | RESAT_IHALE | Ihale | Firma ilişkisi opsiyoneldir |
-| RESAT_SABIT_KOD, SARF_KATEGORI | OrtakKategori | `KATEGORI_TURU` ile ayrilir; parent/self relation desteklenir |
+| RESAT_SABIT_KOD, SARF_KATEGORI | Kategori | `TUR` ile ayrilir; `PARENT` GUID uzerinden self relation desteklenir |
 | R_TUKETIMCINSLERI | TuketimCinsi | Sarf tüketim cinsi |
 | R_DEMIRBAS | Envanter, EnvanterDetay | `EnvanterTuru.DEMIRBAS`; alim yolu/turu, saymanlik no, ihale ve garanti bilgileri detaydadir |
 | R_SARFDEMIRBAS | Envanter, EnvanterDetay | `EnvanterTuru.SARF`; firma bilgisi detaydadir |
 | R_BARKOD | EnvanterBarkod | Demirbaş child kaydı |
-| R_HAREKET | EnvanterHareketi | Hareket geçmişi |
+| R_HAREKET | DepoZimmetHareket, PersonelZimmetHareket | `NERDEN`/`NEREYE` durumuna gore zimmet hareketi |
 | R_SAYIM_GENEL, R_SAYIM_YEREL | SayimDetay | Detay kayıtları |
 
 ## 5. Veri Kaybını Önleme Stratejisi
 
-- Her ana entity üzerinde doğrudan kendi içinde `id`, `guid`, `olusturmaTarihi`, `durum` alanları bulunur.
+- `Kategori` disindaki ana entity kayitlarinda `id`, `guid`, `olusturmaTarihi`, `durum` alanlari bulunur; kategori tarihi `tarih` alaninda tutulur.
 - Idempotency `VERI_GOC_ID_ESLEME` tablosunda `ESKI_TABLO_ADI + ESKI_ANAHTAR + HEDEF_VARLIK_ADI` ile sağlanır.
 - Hedefte açık alanı olmayan her legacy kolon `VERI_GOC_ESKI_VERI_YUKU.veriYukuJson` içinde korunur; payload ve hata kayıtlarında kaynak tablo adı ayrıca tutulur.
 - İlişkisi bulunamayan kayıt atlanmaz; eksik ilişki `VERI_GOC_HATA_KAYDI` tablosuna yazılır.

@@ -2,9 +2,9 @@ package com.stoktakip.migration.core;
 
 public enum LegacyTableSpec {
     RESAT_DEPO("RESAT_DEPO", "ID", "GUID", "ID"),
-    RESAT_MARKA("RESAT_MARKA", "ID", "GUID", "ID"),
+    RESAT_MARKA("RESAT_MARKA", null, "GUID", "GUID"),
     SARF_MARKA("SARF_MARKA", null, "ID", "ID"),
-    RESAT_MODEL("RESAT_MODEL", "ID", "GUID", "ID"),
+    RESAT_MODEL("RESAT_MODEL", null, "GUID", "GUID"),
     SARF_MODEL("SARF_MODEL", null, "GID", "GID"),
     RESAT_FIRMA("RESAT_FIRMA", "ID", "GUID", "ID"),
     SARF_FIRMA("SARF_FIRMA", null, "GUID", "GUID"),

@@ -68,15 +68,20 @@ public class TargetEntityWriter {
     }
 
     private static void kaynakAlanlariUygula(LegacyRow row, Object entity) {
-        alanDegeriYaz(entity, "id", row.id());
+        alanDegeriVarsaYaz(entity, "id", row.id());
         alanDegeriYaz(entity, "guid", entityGuid(row));
-        alanDegeriYaz(entity, "olusturmaTarihi", row.dateTime(olusturmaTarihiKolonu(row)));
-        if (row.string("DURUM") != null) {
-            alanDegeriYaz(entity, "durum", LegacyFlagMapper.durum(row.string("DURUM")));
-        } else if (row.string("AKTIF") != null) {
-            alanDegeriYaz(entity, "durum", LegacyFlagMapper.durum(row.string("AKTIF")));
-        } else if (alanDegeri(entity, "durum") == null) {
-            alanDegeriYaz(entity, "durum", "BILINMIYOR");
+        LocalDateTime tarih = row.dateTime(olusturmaTarihiKolonu(row));
+        if (!alanDegeriVarsaYaz(entity, "tarih", tarih)) {
+            alanDegeriVarsaYaz(entity, "olusturmaTarihi", tarih);
+        }
+        if (alanVarMi(entity, "durum")) {
+            if (row.string("DURUM") != null) {
+                alanDegeriYaz(entity, "durum", LegacyFlagMapper.durum(row.string("DURUM")));
+            } else if (row.string("AKTIF") != null) {
+                alanDegeriYaz(entity, "durum", LegacyFlagMapper.durum(row.string("AKTIF")));
+            } else if (alanDegeri(entity, "durum") == null) {
+                alanDegeriYaz(entity, "durum", "BILINMIYOR");
+            }
         }
     }
 
@@ -120,18 +125,40 @@ public class TargetEntityWriter {
         }
     }
 
+    private static boolean alanDegeriVarsaYaz(Object entity, String alanAdi, Object value) {
+        Optional<Field> field = alanBul(entity, alanAdi);
+        if (field.isEmpty()) {
+            return false;
+        }
+        try {
+            field.get().set(entity, value);
+            return true;
+        } catch (IllegalAccessException exception) {
+            throw new IllegalStateException("Entity alani yazilamadi: " + alanAdi, exception);
+        }
+    }
+
+    private static boolean alanVarMi(Object entity, String alanAdi) {
+        return alanBul(entity, alanAdi).isPresent();
+    }
+
     private static Field alan(Object entity, String alanAdi) {
+        return alanBul(entity, alanAdi)
+            .orElseThrow(() -> new IllegalStateException("Entity alani bulunamadi: " + alanAdi));
+    }
+
+    private static Optional<Field> alanBul(Object entity, String alanAdi) {
         Class<?> type = entity.getClass();
         while (type != null) {
             try {
                 Field field = type.getDeclaredField(alanAdi);
                 field.setAccessible(true);
-                return field;
+                return Optional.of(field);
             } catch (NoSuchFieldException ignored) {
                 type = type.getSuperclass();
             }
         }
-        throw new IllegalStateException("Entity alani bulunamadi: " + alanAdi);
+        return Optional.empty();
     }
 
     private void idEslemeOlustur(

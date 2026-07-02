@@ -15,120 +15,24 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "MODEL")
-public class Model {
-
-    @Column(name = "ID")
-    private Long id;
+public class Model extends BaseEntity{
 
     @Id
     @Column(name = "GUID", length = 128)
     private String guid;
 
-    @Column(name = "OLUSTURMA_TARIHI")
-    private LocalDateTime olusturmaTarihi;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "MARKA_GUID", referencedColumnName = "GUID")
+    private Marka marka;
 
-    @Column(name = "DURUM", length = 32)
-    private String durum;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getGuid() {
-        return guid;
-    }
-
-    public void setGuid(String guid) {
-        this.guid = guid;
-    }
-
-    public LocalDateTime getOlusturmaTarihi() {
-        return olusturmaTarihi;
-    }
-
-    public void setOlusturmaTarihi(LocalDateTime olusturmaTarihi) {
-        this.olusturmaTarihi = olusturmaTarihi;
-    }
-
-    public String getDurum() {
-        return durum;
-    }
-
-    public void setDurum(String durum) {
-        this.durum = durum;
-    }
-
-    @Column(name = "AD", length = 255, nullable = false)
-    private String ad;
+    @Column(name = "MODEL_ADI", length = 255, nullable = false)
+    private String modelAdi;
 
     @Column(name = "ACIKLAMA", length = 500)
     private String aciklama;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "KAYNAK_ALANI", length = 32, nullable = false)
-    private KaynakAlani kaynakAlani;
+    @ManyToOne
+    @JoinColumn(name = "KATEGORI_GUID", referencedColumnName = "GUID")
+    private Kategori kategori;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "MARKAGUID", referencedColumnName = "GUID")
-    private Marka marka;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "MODELGUID", referencedColumnName = "GUID")
-    private Model ustModel;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "RESAT_DEPOGUID", referencedColumnName = "GUID")
-    private Depo depo;
-
-    public String getAd() {
-        return ad;
-    }
-
-    public void setAd(String ad) {
-        this.ad = ad;
-    }
-
-    public String getAciklama() {
-        return aciklama;
-    }
-
-    public void setAciklama(String aciklama) {
-        this.aciklama = aciklama;
-    }
-
-    public KaynakAlani getKaynakAlani() {
-        return kaynakAlani;
-    }
-
-    public void setKaynakAlani(KaynakAlani kaynakAlani) {
-        this.kaynakAlani = kaynakAlani;
-    }
-
-    public Marka getMarka() {
-        return marka;
-    }
-
-    public void setMarka(Marka marka) {
-        this.marka = marka;
-    }
-
-    public Model getUstModel() {
-        return ustModel;
-    }
-
-    public void setUstModel(Model ustModel) {
-        this.ustModel = ustModel;
-    }
-
-    public Depo getDepo() {
-        return depo;
-    }
-
-    public void setDepo(Depo depo) {
-        this.depo = depo;
-    }
 }

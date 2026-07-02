@@ -14,50 +14,9 @@ import java.time.LocalDateTime;
 @Table(name = "ENVANTER_RESIM")
 public class EnvanterResim {
 
-    @Column(name = "ID")
-    private Long id;
-
     @Id
     @Column(name = "GUID", length = 128)
     private String guid;
-
-    @Column(name = "OLUSTURMA_TARIHI")
-    private LocalDateTime olusturmaTarihi;
-
-    @Column(name = "DURUM", length = 32)
-    private String durum;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getGuid() {
-        return guid;
-    }
-
-    public void setGuid(String guid) {
-        this.guid = guid;
-    }
-
-    public LocalDateTime getOlusturmaTarihi() {
-        return olusturmaTarihi;
-    }
-
-    public void setOlusturmaTarihi(LocalDateTime olusturmaTarihi) {
-        this.olusturmaTarihi = olusturmaTarihi;
-    }
-
-    public String getDurum() {
-        return durum;
-    }
-
-    public void setDurum(String durum) {
-        this.durum = durum;
-    }
 
     @Column(name = "AD", length = 100)
     private String ad;

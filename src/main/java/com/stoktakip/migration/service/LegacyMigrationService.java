@@ -4,8 +4,9 @@ import com.stoktakip.enums.SayimKapsami;
 import com.stoktakip.enums.EnvanterTuru;
 import com.stoktakip.enums.KaynakAlani;
 import com.stoktakip.entity.Aparat;
+import com.stoktakip.entity.DepoZimmetHareket;
 import com.stoktakip.entity.Marka;
-import com.stoktakip.entity.OrtakKategori;
+import com.stoktakip.entity.Kategori;
 import com.stoktakip.entity.Firma;
 import com.stoktakip.entity.TuketimCinsi;
 import com.stoktakip.entity.Depo;
@@ -13,9 +14,9 @@ import com.stoktakip.entity.EnvanterBarkod;
 import com.stoktakip.entity.EnvanterDetay;
 import com.stoktakip.entity.EnvanterResim;
 import com.stoktakip.entity.Envanter;
-import com.stoktakip.entity.EnvanterHareketi;
 import com.stoktakip.entity.EnvanterAciklama;
 import com.stoktakip.entity.Model;
+import com.stoktakip.entity.PersonelZimmetHareket;
 import com.stoktakip.entity.IadeOnayKaydi;
 import com.stoktakip.entity.IadeHavuzKaydi;
 import com.stoktakip.entity.SqlKaydi;
@@ -28,8 +29,11 @@ import com.stoktakip.migration.core.LegacyFlagMapper;
 import com.stoktakip.migration.core.LegacyRow;
 import com.stoktakip.migration.core.LegacyTableSpec;
 import com.stoktakip.migration.core.MigrationContext;
+import com.stoktakip.migration.entity.MigrationIdMap;
 import com.stoktakip.migration.entity.MigrationRun;
+import com.stoktakip.migration.repository.MigrationIdMapRepository;
 import com.stoktakip.repository.AparatRepository;
+import com.stoktakip.repository.DepoZimmetHareketRepository;
 import com.stoktakip.repository.MarkaRepository;
 import com.stoktakip.repository.FirmaRepository;
 import com.stoktakip.repository.TuketimCinsiRepository;
@@ -37,10 +41,10 @@ import com.stoktakip.repository.DepoRepository;
 import com.stoktakip.repository.EnvanterBarkodRepository;
 import com.stoktakip.repository.EnvanterResimRepository;
 import com.stoktakip.repository.EnvanterRepository;
-import com.stoktakip.repository.EnvanterHareketiRepository;
 import com.stoktakip.repository.EnvanterAciklamaRepository;
 import com.stoktakip.repository.ModelRepository;
-import com.stoktakip.repository.OrtakKategoriRepository;
+import com.stoktakip.repository.KategoriRepository;
+import com.stoktakip.repository.PersonelZimmetHareketRepository;
 import com.stoktakip.repository.IadeOnayKaydiRepository;
 import com.stoktakip.repository.IadeHavuzKaydiRepository;
 import com.stoktakip.repository.SqlKaydiRepository;
@@ -48,6 +52,8 @@ import com.stoktakip.repository.SayimDetayRepository;
 import com.stoktakip.repository.SayimRepository;
 import com.stoktakip.repository.SarfLogKaydiRepository;
 import com.stoktakip.repository.IhaleRepository;
+import java.lang.reflect.Field;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -97,19 +103,21 @@ public class LegacyMigrationService {
     private final TargetEntityWriter yazici;
     private final LegacyReferenceResolver cozucu;
     private final MigrationAuditService denetimServisi;
+    private final MigrationIdMapRepository idMapRepository;
     private final DepoRepository depoRepository;
     private final MarkaRepository markaRepository;
     private final ModelRepository modelRepository;
     private final FirmaRepository firmaRepository;
     private final IhaleRepository ihaleRepository;
     private final TuketimCinsiRepository tuketimCinsiRepository;
-    private final OrtakKategoriRepository ortakKategoriRepository;
+    private final KategoriRepository kategoriRepository;
     private final EnvanterRepository envanterRepository;
     private final AparatRepository aparatRepository;
     private final EnvanterResimRepository envanterResimRepository;
     private final EnvanterBarkodRepository envanterBarkodRepository;
     private final EnvanterAciklamaRepository envanterAciklamaRepository;
-    private final EnvanterHareketiRepository envanterHareketiRepository;
+    private final DepoZimmetHareketRepository depoZimmetHareketRepository;
+    private final PersonelZimmetHareketRepository personelZimmetHareketRepository;
     private final SayimRepository sayimRepository;
     private final SayimDetayRepository sayimDetayRepository;
     private final IadeHavuzKaydiRepository iadeHavuzKaydiRepository;
@@ -123,19 +131,21 @@ public class LegacyMigrationService {
         TargetEntityWriter yazici,
         LegacyReferenceResolver cozucu,
         MigrationAuditService denetimServisi,
+        MigrationIdMapRepository idMapRepository,
         DepoRepository depoRepository,
         MarkaRepository markaRepository,
         ModelRepository modelRepository,
         FirmaRepository firmaRepository,
         IhaleRepository ihaleRepository,
         TuketimCinsiRepository tuketimCinsiRepository,
-        OrtakKategoriRepository ortakKategoriRepository,
+        KategoriRepository kategoriRepository,
         EnvanterRepository envanterRepository,
         AparatRepository aparatRepository,
         EnvanterResimRepository envanterResimRepository,
         EnvanterBarkodRepository envanterBarkodRepository,
         EnvanterAciklamaRepository envanterAciklamaRepository,
-        EnvanterHareketiRepository envanterHareketiRepository,
+        DepoZimmetHareketRepository depoZimmetHareketRepository,
+        PersonelZimmetHareketRepository personelZimmetHareketRepository,
         SayimRepository sayimRepository,
         SayimDetayRepository sayimDetayRepository,
         IadeHavuzKaydiRepository iadeHavuzKaydiRepository,
@@ -148,19 +158,21 @@ public class LegacyMigrationService {
         this.yazici = yazici;
         this.cozucu = cozucu;
         this.denetimServisi = denetimServisi;
+        this.idMapRepository = idMapRepository;
         this.depoRepository = depoRepository;
         this.markaRepository = markaRepository;
         this.modelRepository = modelRepository;
         this.firmaRepository = firmaRepository;
         this.ihaleRepository = ihaleRepository;
         this.tuketimCinsiRepository = tuketimCinsiRepository;
-        this.ortakKategoriRepository = ortakKategoriRepository;
+        this.kategoriRepository = kategoriRepository;
         this.envanterRepository = envanterRepository;
         this.aparatRepository = aparatRepository;
         this.envanterResimRepository = envanterResimRepository;
         this.envanterBarkodRepository = envanterBarkodRepository;
         this.envanterAciklamaRepository = envanterAciklamaRepository;
-        this.envanterHareketiRepository = envanterHareketiRepository;
+        this.depoZimmetHareketRepository = depoZimmetHareketRepository;
+        this.personelZimmetHareketRepository = personelZimmetHareketRepository;
         this.sayimRepository = sayimRepository;
         this.sayimDetayRepository = sayimDetayRepository;
         this.iadeHavuzKaydiRepository = iadeHavuzKaydiRepository;
@@ -321,45 +333,41 @@ public class LegacyMigrationService {
     }
 
     private void resatMarkayiAktar(MigrationContext context, LegacyRow row) {
-        yazici.yaz(context, row, "Marka", markaRepository, Marka::new, brand -> {
-            brand.setAd(varsayilanMetin(row.string("ADI"), row.anahtar()));
-            brand.setAciklama(row.string("ACIKLAMA"));
-            brand.setKaynakAlani(KaynakAlani.DEMIRBAS);
-        }, columns("ID", "GUID", "ADI", "ACIKLAMA", "DURUM", "K_TARIH"));
+        yazici.yaz(context, row, "Marka", markaRepository, Marka::new, marka -> {
+            alanYaz(marka, "markaAdi", varsayilanMetin(row.string("ADI"), row.anahtar()));
+            alanYaz(marka, "aciklama", row.string("ACIKLAMA"));
+            alanYaz(marka, "aktif", aktifDegeri(row.string("DURUM")));
+        }, columns("GUID", "ADI", "ACIKLAMA", "DURUM", "K_TARIH"));
     }
 
     private void sarfMarkayiAktar(MigrationContext context, LegacyRow row) {
-        yazici.yaz(context, row, "Marka", markaRepository, Marka::new, brand -> {
-            brand.setAd(varsayilanMetin(row.string("AD"), row.anahtar()));
-            brand.setKaynakAlani(KaynakAlani.SARF);
-            brand.setDepo(cozucu.depot(context, row, "DEPO"));
-            brand.setDurum(LegacyFlagMapper.durum(row.string("AKTIF")));
-        }, columns("ID", "AD", "AKTIF", "DEPO"));
+        yazici.yaz(context, row, "Marka", markaRepository, Marka::new, marka -> {
+            alanYaz(marka, "markaAdi", varsayilanMetin(row.string("AD"), row.anahtar()));
+            alanYaz(marka, "aktif", aktifDegeri(row.string("AKTIF")));
+        }, columns("ID", "AD", "AKTIF"));
     }
 
     private void resatModeliAktar(MigrationContext context, LegacyRow row) {
         yazici.yaz(context, row, "Model", modelRepository, Model::new, model -> {
-            model.setAd(varsayilanMetin(row.string("ADI"), row.anahtar()));
-            model.setAciklama(row.string("ACIKLAMA"));
-            model.setKaynakAlani(KaynakAlani.DEMIRBAS);
-            model.setUstModel(cozucu.resatModel(context, row, "PARENT"));
-        }, columns("ID", "GUID", "ADI", "ACIKLAMA", "DURUM", "K_TARIH", "PARENT"));
+            alanYaz(model, "modelAdi", varsayilanMetin(row.string("ADI"), row.anahtar()));
+            alanYaz(model, "aciklama", row.string("ACIKLAMA"));
+            alanYaz(model, "aktif", aktifDegeri(row.string("DURUM")));
+            alanYaz(model, "marka", cozucu.resatBrand(context, row, "PARENT"));
+        }, columns("GUID", "ADI", "ACIKLAMA", "DURUM", "K_TARIH", "PARENT"));
     }
 
     private void sarfModeliAktar(MigrationContext context, LegacyRow row) {
         yazici.yaz(context, row, "Model", modelRepository, Model::new, model -> {
-            model.setAd(varsayilanMetin(row.string("AD"), row.anahtar()));
-            model.setKaynakAlani(KaynakAlani.SARF);
-            model.setMarka(cozucu.sarfBrand(context, row, "MARKA"));
-            model.setDepo(cozucu.depot(context, row, "DEPO"));
-            model.setDurum(LegacyFlagMapper.durum(row.string("AKTIF")));
-        }, columns("GID", "MARKA", "AD", "AKTIF", "DEPO"));
+            alanYaz(model, "modelAdi", varsayilanMetin(row.string("AD"), row.anahtar()));
+            alanYaz(model, "aktif", aktifDegeri(row.string("AKTIF")));
+            alanYaz(model, "marka", cozucu.sarfBrand(context, row, "MARKA"));
+        }, columns("GID", "MARKA", "AD", "AKTIF"));
     }
 
     private void resatFirmayiAktar(MigrationContext context, LegacyRow row) {
         yazici.yaz(context, row, "Firma", firmaRepository, Firma::new, company -> {
             firmayiEsle(row, company, "FIRMA_ADI", "NOTLAR", "YETKILITEL", "IRTIBATTEL");
-            company.setKaynakAlani(KaynakAlani.DEMIRBAS);
+            alanYaz(company, "kaynakAlani", KaynakAlani.DEMIRBAS);
         }, columns("ID", "GUID", "FIRMA_ADI", "YETKILI", "YETKILITEL", "IRTIBAT", "IRTIBATTEL",
             "TEL1", "TEL2", "FAX", "WEB", "ADRES", "NOTLAR", "DURUM", "K_TARIH"));
     }
@@ -367,8 +375,8 @@ public class LegacyMigrationService {
     private void sarfFirmayiAktar(MigrationContext context, LegacyRow row) {
         yazici.yaz(context, row, "Firma", firmaRepository, Firma::new, company -> {
             firmayiEsle(row, company, "AD", "NOTE", "YETKILI_TEL", "IRTIBAT_TEL");
-            company.setKaynakAlani(KaynakAlani.SARF);
-            company.setDepo(cozucu.depot(context, row, "DEPO"));
+            alanYaz(company, "kaynakAlani", KaynakAlani.SARF);
+            alanYaz(company, "depo", cozucu.depot(context, row, "DEPO"));
         }, columns("GUID", "AD", "YETKILI", "YETKILI_TEL", "IRTIBAT", "IRTIBAT_TEL", "TEL1", "TEL2",
             "FAX", "WEB", "ADRES", "NOTE", "DEPO"));
     }
@@ -381,48 +389,46 @@ public class LegacyMigrationService {
         String yetkiliTelefonKolonu,
         String irtibatTelefonKolonu
     ) {
-        company.setAd(varsayilanMetin(row.string(adKolonu), row.anahtar()));
-        company.setYetkiliKisi(row.string("YETKILI"));
-        company.setYetkiliTelefon(row.string(yetkiliTelefonKolonu));
-        company.setIrtibatKisi(row.string("IRTIBAT"));
-        company.setIrtibatTelefon(row.string(irtibatTelefonKolonu));
-        company.setTelefon1(row.string("TEL1"));
-        company.setTelefon2(row.string("TEL2"));
-        company.setFaks(row.string("FAX"));
-        company.setWebAdresi(row.string("WEB"));
-        company.setAdres(row.string("ADRES"));
-        company.setAciklama(row.string(aciklamaKolonu));
+        alanYaz(company, "ad", varsayilanMetin(row.string(adKolonu), row.anahtar()));
+        alanYaz(company, "yetkiliKisi", row.string("YETKILI"));
+        alanYaz(company, "yetkiliTelefon", row.string(yetkiliTelefonKolonu));
+        alanYaz(company, "irtibatKisi", row.string("IRTIBAT"));
+        alanYaz(company, "irtibatTelefon", row.string(irtibatTelefonKolonu));
+        alanYaz(company, "telefon1", row.string("TEL1"));
+        alanYaz(company, "telefon2", row.string("TEL2"));
+        alanYaz(company, "faks", row.string("FAX"));
+        alanYaz(company, "webAdresi", row.string("WEB"));
+        alanYaz(company, "adres", row.string("ADRES"));
+        alanYaz(company, "aciklama", row.string(aciklamaKolonu));
     }
 
     private void ihaleyiAktar(MigrationContext context, LegacyRow row) {
         yazici.yaz(context, row, "Ihale", ihaleRepository, Ihale::new, tender -> {
-            tender.setAd(varsayilanMetin(row.string("IHALE_ADI"), row.anahtar()));
-            tender.setIhaleTarihi(row.dateTime("IHALE_TAR"));
-            tender.setKabulTarihi(row.dateTime("KABUL_TAR"));
-            tender.setSozlesmeTarihi(row.dateTime("SOZ_TAR"));
-            tender.setBirimKodu(row.longValue("BIRIM"));
-            tender.setPersonel(row.string("PERSONEL"));
-            tender.setAciklama(row.string("ACIKLAMA"));
-            tender.setKomisyonBaskani(row.string("KOM_BASKANI"));
-            tender.setUye1(row.string("UYE1"));
-            tender.setUye2(row.string("UYE2"));
-            tender.setYerindeGaranti(row.longValue("YERINDE_GARANTI"));
-            tender.setOnarimSuresi(row.longValue("ONARIM_SURESI"));
-            tender.setFirma(cozucu.resatCompany(context, row, "FIRMA_ID"));
+            alanYaz(tender, "ad", varsayilanMetin(row.string("IHALE_ADI"), row.anahtar()));
+            alanYaz(tender, "ihaleTarihi", row.dateTime("IHALE_TAR"));
+            alanYaz(tender, "kabulTarihi", row.dateTime("KABUL_TAR"));
+            alanYaz(tender, "sozlesmeTarihi", row.dateTime("SOZ_TAR"));
+            alanYaz(tender, "birimKodu", row.longValue("BIRIM"));
+            alanYaz(tender, "personel", row.string("PERSONEL"));
+            alanYaz(tender, "aciklama", row.string("ACIKLAMA"));
+            alanYaz(tender, "komisyonBaskani", row.string("KOM_BASKANI"));
+            alanYaz(tender, "uye1", row.string("UYE1"));
+            alanYaz(tender, "uye2", row.string("UYE2"));
+            alanYaz(tender, "yerindeGaranti", row.longValue("YERINDE_GARANTI"));
+            alanYaz(tender, "onarimSuresi", row.longValue("ONARIM_SURESI"));
+            alanYaz(tender, "firma", cozucu.resatCompany(context, row, "FIRMA_ID"));
         }, columns("ID", "GUID", "IHALE_ADI", "IHALE_TAR", "KABUL_TAR", "BIRIM", "PERSONEL",
             "FIRMA_ID", "SOZ_TAR", "ACIKLAMA", "DURUM", "K_TARIH", "KOM_BASKANI", "UYE1", "UYE2",
             "YERINDE_GARANTI", "ONARIM_SURESI"));
     }
 
     private void sabitKoduAktar(MigrationContext context, LegacyRow row) {
-        yazici.yaz(context, row, "OrtakKategori", ortakKategoriRepository, OrtakKategori::new, kategori -> {
-            kategori.setKategoriTuru("SABIT_KOD");
-            kategori.setAd(varsayilanMetin(row.string("AD"), row.anahtar()));
-            kategori.setAciklama(row.string("YORUM"));
-            kategori.setUstKategori(cozucu.sabitKod(context, row, "PARENT"));
-            kategori.setRDepoGuid(null);
-            kategori.setDurum(tekKarakter(row.string("DURUM")));
-        }, columns("ID", "GUID", "PARENT", "AD", "YORUM", "DURUM", "K_TARIH"));
+        yazici.yaz(context, row, "Kategori", kategoriRepository, Kategori::new, kategori -> {
+            alanYaz(kategori, "parent", row.string("PARENT"));
+            alanYaz(kategori, "baslik", varsayilanMetin(row.string("AD"), row.anahtar()));
+            alanYaz(kategori, "aktif", aktifDegeri(row.string("DURUM")));
+            alanYaz(kategori, "olusturmaTarihi", row.dateTime("K_TARIH"));
+        }, columns("GUID", "PARENT", "AD", "DURUM", "K_TARIH"));
     }
 
     private void tuketimCinsiniAktar(MigrationContext context, LegacyRow row) {
@@ -433,36 +439,29 @@ public class LegacyMigrationService {
     }
 
     private void kategoriyiAktar(MigrationContext context, LegacyRow row) {
-        yazici.yaz(context, row, "OrtakKategori", ortakKategoriRepository, OrtakKategori::new, kategori -> {
-            kategori.setKategoriTuru("SARF");
-            kategori.setAd(varsayilanMetin(row.string("TITLE"), row.anahtar()));
-            kategori.setAciklama(null);
-            kategori.setUstKategori(cozucu.category(context, row, "PARENT"));
-            kategori.setRDepoGuid(row.string("DEPO"));
-            kategori.setDurum(tekKarakter(row.string("DURUM")));
-        }, columns("GUID", "PARENT", "TITLE", "DEPO"));
+        yazici.yaz(context, row, "Kategori", kategoriRepository, Kategori::new, kategori -> {
+            alanYaz(kategori, "parent", row.string("PARENT"));
+            alanYaz(kategori, "baslik", varsayilanMetin(row.string("BASLIK"), row.anahtar()));
+        }, columns("GUID", "PARENT", "BASLIK"));
     }
 
     private void demirbasiAktar(MigrationContext context, LegacyRow row) {
         yazici.yaz(context, row, "Envanter", envanterRepository, Envanter::new, item -> {
-            item.setEnvanterTuru(EnvanterTuru.DEMIRBAS);
-            item.setAd(varsayilanMetin(row.string("M_ADI"), row.anahtar()));
-            item.setSeriNo(row.string("SERI_NO"));
-            item.setBirimKodu(row.longValue("BIRIM"));
-            item.setAciklama(row.string("ACIKLAMA"));
-            item.setZimmetliPersonelKodu(row.string("PERSZIMMET"));
-            item.setSubeNo(row.string("ILSUBEDBASNO"));
-            item.setSabitKod(cozucu.sabitKod(context, row, "SABITKOD"));
-            item.setDepo(cozucu.depot(context, row, "DEPO_GUID"));
-            item.setMarka(cozucu.resatBrand(context, row, "MARKA"));
-            item.setModel(cozucu.resatModel(context, row, "MODEL"));
-            EnvanterDetay detail = item.detayOlustur();
-            detail.setAlimYolu(row.longValue("ALIM_YOLU"));
-            detail.setAlimTuru(row.string("ALIM_TUR"));
-            detail.setGarantiBaslangicTarihi(row.dateTime("G_BAS_TAR"));
-            detail.setGarantiBitisTarihi(row.dateTime("G_BIT_TAR"));
-            detail.setSaymanlikNo(row.string("SAYMANLIKNO"));
-            detail.setIhale(cozucu.tender(context, row, "IHALE_ID"));
+            alanYaz(item, "envanterTuru", EnvanterTuru.DEMIRBAS);
+            alanYaz(item, "envanterAdi", varsayilanMetin(row.string("M_ADI"), row.anahtar()));
+            alanYaz(item, "seriNo", row.string("SERI_NO"));
+            alanYaz(item, "sube", row.longValue("BIRIM"));
+            alanYaz(item, "aciklama", row.string("ACIKLAMA"));
+            alanYaz(item, "ilSubeDaireBaskanlikNumarasi", row.string("ILSUBEDBASNO"));
+            alanYaz(item, "depo", cozucu.depot(context, row, "DEPO_GUID"));
+            alanYaz(item, "model", cozucu.resatModel(context, row, "MODEL"));
+            EnvanterDetay detail = envanterDetayiOlustur(item);
+            alanYaz(detail, "alimYolu", row.longValue("ALIM_YOLU"));
+            alanYaz(detail, "alimTuru", row.string("ALIM_TUR"));
+            alanYaz(detail, "garantiBaslangicTarihi", row.dateTime("G_BAS_TAR"));
+            alanYaz(detail, "garantiBitisTarihi", row.dateTime("G_BIT_TAR"));
+            alanYaz(detail, "saymanlikNo", row.string("SAYMANLIKNO"));
+            alanYaz(detail, "ihale", cozucu.tender(context, row, "IHALE_ID"));
         }, columns("ID", "GUID", "SERI_NO", "BIRIM", "SABITKOD", "DEPO_GUID",
             "ALIM_YOLU", "M_ADI", "MARKA", "MODEL", "IHALE_ID", "G_BAS_TAR",
             "G_BIT_TAR", "ACIKLAMA", "DURUM", "K_TARIH", "SAYMANLIKNO", "PERSZIMMET",
@@ -471,27 +470,23 @@ public class LegacyMigrationService {
 
     private void sarfiAktar(MigrationContext context, LegacyRow row) {
         yazici.yaz(context, row, "Envanter", envanterRepository, Envanter::new, item -> {
-            item.setEnvanterTuru(EnvanterTuru.SARF);
-            item.setAd(varsayilanMetin(row.string("TUR"), row.anahtar()));
-            item.setAdetMetni(row.string("ADET"));
-            item.setSarfTurMetni(row.string("TUR"));
-            item.setAlimTarihi(row.dateTime("A_TARIH"));
-            item.setAciklama(row.string("ACIKLAMA"));
-            item.setTuketimCinsi(cozucu.tuketimCinsi(context, row, "ADI"));
-            item.setMarka(cozucu.resatBrand(context, row, "MARKA"));
-            item.setModel(cozucu.resatModel(context, row, "MODEL"));
-            item.setDepo(cozucu.depot(context, row, "ALANDEPO"));
-            item.detayOlustur().setFirma(cozucu.resatCompany(context, row, "FIRMA"));
+            alanYaz(item, "envanterTuru", EnvanterTuru.SARF);
+            alanYaz(item, "envanterAdi", varsayilanMetin(row.string("TUR"), row.anahtar()));
+            alanYaz(item, "aciklama", row.string("ACIKLAMA"));
+            alanYaz(item, "model", cozucu.resatModel(context, row, "MODEL"));
+            alanYaz(item, "depo", cozucu.depot(context, row, "ALANDEPO"));
+            EnvanterDetay detail = envanterDetayiOlustur(item);
+            alanYaz(detail, "firma", cozucu.resatCompany(context, row, "FIRMA"));
         }, columns("ID", "GUID", "ADI", "MARKA", "MODEL", "ADET", "TUR",
             "FIRMA", "A_TARIH", "ACIKLAMA", "DURUM", "K_TARIH", "ALANDEPO"));
     }
 
     private void aparatiAktar(MigrationContext context, LegacyRow row) {
         yazici.yaz(context, row, "Aparat", aparatRepository, Aparat::new, apparatus -> {
-            apparatus.setAd(varsayilanMetin(row.string("APA_ADI"), row.anahtar()));
-            apparatus.setAciklama(row.string("ACIKLAMA"));
-            apparatus.setMarka(cozucu.resatBrand(context, row, "MARKA"));
-            apparatus.setModel(cozucu.resatModel(context, row, "MODEL"));
+            alanYaz(apparatus, "ad", varsayilanMetin(row.string("APA_ADI"), row.anahtar()));
+            alanYaz(apparatus, "aciklama", row.string("ACIKLAMA"));
+            alanYaz(apparatus, "marka", cozucu.resatBrand(context, row, "MARKA"));
+            alanYaz(apparatus, "model", cozucu.resatModel(context, row, "MODEL"));
         }, columns("ID", "GUID", "APA_ADI", "MARKA", "MODEL", "ACIKLAMA", "DURUM", "K_TARIH"));
     }
 
@@ -524,16 +519,135 @@ public class LegacyMigrationService {
     }
 
     private void hareketiAktar(MigrationContext context, LegacyRow row) {
-        yazici.yaz(context, row, "EnvanterHareketi", envanterHareketiRepository, EnvanterHareketi::new, movement -> {
-            movement.setEnvanter(cozucu.inventory(context, row, "MGUID"));
-            movement.setHareketTuru(LegacyFlagMapper.hareketTuru(row.string("ADI")));
-            movement.setAd(row.string("ADI"));
-            movement.setNeredenDepo(cozucu.depot(context, row, "NERDEN"));
-            movement.setNereyeDepo(cozucu.depot(context, row, "NEREYE"));
-            movement.setPersonelKodu(row.string("KULLANICI"));
-            movement.setAciklama(row.string("ACIKLAMA"));
-            movement.setHareketNo(row.longValue("HNO"));
-        }, columns("ID", "MGUID", "ADI", "NERDEN", "NEREYE", "KULLANICI", "ACIKLAMA", "K_TARIH", "HNO"));
+        Long kaynakId = row.id();
+        if (kaynakId == null) {
+            denetimServisi.hata(context, row, "ID", "R_HAREKET.ID bos oldugu icin hareket kaydi aktarilmadi.", null);
+            context.stats(row.tabloAdi()).atlandi();
+            return;
+        }
+        if (zimmetHareketiVarMi(kaynakId)) {
+            context.stats(row.tabloAdi()).tekrar();
+            context.stats(row.tabloAdi()).atlandi();
+            return;
+        }
+
+        Envanter envanter = cozucu.inventory(context, row, "MGUID");
+        if (envanter == null) {
+            if (row.string("MGUID") == null) {
+                denetimServisi.hata(context, row, "MGUID", "R_HAREKET.MGUID bos oldugu icin hareket kaydi aktarilmadi.", null);
+            }
+            context.stats(row.tabloAdi()).atlandi();
+            return;
+        }
+
+        if (depoHareketiMi(row)) {
+            DepoZimmetHareket hareket = new DepoZimmetHareket();
+            ortakZimmetHareketAlanlariniYaz(hareket, kaynakId, envanter, row);
+            hareket.setMevcutDepo(depoVarsa(context, row, "NERDEN"));
+            hareket.setGidecegiDepo(depoVarsa(context, row, "NEREYE"));
+            depoZimmetHareketiniKaydet(context, row, hareket);
+            return;
+        }
+
+        PersonelZimmetHareket hareket = new PersonelZimmetHareket();
+        ortakZimmetHareketAlanlariniYaz(hareket, kaynakId, envanter, row);
+        personelZimmetHareketiniKaydet(context, row, hareket);
+    }
+
+    private boolean zimmetHareketiVarMi(Long kaynakId) {
+        return depoZimmetHareketRepository.existsById(kaynakId)
+            || personelZimmetHareketRepository.existsById(kaynakId);
+    }
+
+    private static boolean depoHareketiMi(LegacyRow row) {
+        return row.string("NERDEN") != null || row.string("NEREYE") != null;
+    }
+
+    private Depo depoVarsa(MigrationContext context, LegacyRow row, String column) {
+        return row.string(column) == null ? null : cozucu.depot(context, row, column);
+    }
+
+    private static void ortakZimmetHareketAlanlariniYaz(
+        DepoZimmetHareket hareket,
+        Long kaynakId,
+        Envanter envanter,
+        LegacyRow row
+    ) {
+        hareket.setId(kaynakId);
+        hareket.setEnvanter(envanter);
+        hareket.setZimmetTuru(row.string("ADI"));
+        hareket.setIslemYapanPersonel(row.string("KULLANICI"));
+        hareket.setAciklama(row.string("ACIKLAMA"));
+        hareket.setOlusturmaTarihi(row.dateTime("K_TARIH"));
+    }
+
+    private static void ortakZimmetHareketAlanlariniYaz(
+        PersonelZimmetHareket hareket,
+        Long kaynakId,
+        Envanter envanter,
+        LegacyRow row
+    ) {
+        hareket.setId(kaynakId);
+        hareket.setEnvanter(envanter);
+        hareket.setZimmetTuru(row.string("ADI"));
+        hareket.setIslemYapanPersonel(row.string("KULLANICI"));
+        hareket.setAciklama(row.string("ACIKLAMA"));
+        hareket.setOlusturmaTarihi(row.dateTime("K_TARIH"));
+    }
+
+    private void depoZimmetHareketiniKaydet(MigrationContext context, LegacyRow row, DepoZimmetHareket hareket) {
+        if (context.dryRun()) {
+            context.stats(row.tabloAdi()).aktarildi();
+            denetimServisi.veriYuku(context, row, "DepoZimmetHareket", null, hareketKolonlari());
+            return;
+        }
+
+        DepoZimmetHareket kaydedilen = depoZimmetHareketRepository.save(hareket);
+        String hedefId = String.valueOf(kaydedilen.getId());
+        idEslemeOlustur(context, row, "DepoZimmetHareket", hedefId);
+        denetimServisi.veriYuku(context, row, "DepoZimmetHareket", hedefId, hareketKolonlari());
+        context.stats(row.tabloAdi()).aktarildi();
+    }
+
+    private void personelZimmetHareketiniKaydet(
+        MigrationContext context,
+        LegacyRow row,
+        PersonelZimmetHareket hareket
+    ) {
+        if (context.dryRun()) {
+            context.stats(row.tabloAdi()).aktarildi();
+            denetimServisi.veriYuku(context, row, "PersonelZimmetHareket", null, hareketKolonlari());
+            return;
+        }
+
+        PersonelZimmetHareket kaydedilen = personelZimmetHareketRepository.save(hareket);
+        String hedefId = String.valueOf(kaydedilen.getId());
+        idEslemeOlustur(context, row, "PersonelZimmetHareket", hedefId);
+        denetimServisi.veriYuku(context, row, "PersonelZimmetHareket", hedefId, hareketKolonlari());
+        context.stats(row.tabloAdi()).aktarildi();
+    }
+
+    private void idEslemeOlustur(MigrationContext context, LegacyRow row, String hedefVarlikAdi, String hedefVarlikGuid) {
+        if (idMapRepository
+            .findByEskiTabloAdiAndEskiAnahtarAndHedefVarlikAdi(row.tabloAdi(), row.anahtar(), hedefVarlikAdi)
+            .isPresent()) {
+            return;
+        }
+
+        MigrationIdMap idMap = new MigrationIdMap();
+        idMap.setRunId(context.calismaId());
+        idMap.setEskiId(row.id());
+        idMap.setEskiGuid(row.guid());
+        idMap.setEskiTabloAdi(row.tabloAdi());
+        idMap.setEskiAnahtar(row.anahtar());
+        idMap.setHedefVarlikAdi(hedefVarlikAdi);
+        idMap.setHedefVarlikGuid(hedefVarlikGuid);
+        idMap.setMigratedAt(LocalDateTime.now());
+        idMapRepository.save(idMap);
+    }
+
+    private static Set<String> hareketKolonlari() {
+        return columns("ID", "MGUID", "ADI", "NERDEN", "NEREYE", "KULLANICI", "ACIKLAMA", "K_TARIH");
     }
 
     private void sayimiAktar(MigrationContext context, LegacyRow row) {
@@ -630,15 +744,15 @@ public class LegacyMigrationService {
             case RESAT_MODEL, SARF_MODEL -> modelRepository.count();
             case RESAT_FIRMA, SARF_FIRMA -> firmaRepository.count();
             case RESAT_IHALE -> ihaleRepository.count();
-            case RESAT_SABIT_KOD -> ortakKategoriRepository.count();
+            case RESAT_SABIT_KOD -> kategoriRepository.count();
             case R_TUKETIMCINSLERI -> tuketimCinsiRepository.count();
-            case SARF_KATEGORI -> ortakKategoriRepository.count();
+            case SARF_KATEGORI -> kategoriRepository.count();
             case R_DEMIRBAS, R_SARFDEMIRBAS -> envanterRepository.count();
             case R_APARAT -> aparatRepository.count();
             case RESAT_DEMIRBAS_RESIM -> envanterResimRepository.count();
             case R_BARKOD -> envanterBarkodRepository.count();
             case R_DEMIRBAS_ACIKLAMA -> envanterAciklamaRepository.count();
-            case R_HAREKET -> envanterHareketiRepository.count();
+            case R_HAREKET -> depoZimmetHareketRepository.count() + personelZimmetHareketRepository.count();
             case R_SAYIM -> sayimRepository.count();
             case R_SAYIM_GENEL, R_SAYIM_YEREL -> sayimDetayRepository.count();
             case R_IADE_HAVUZU -> iadeHavuzKaydiRepository.count();
@@ -658,8 +772,60 @@ public class LegacyMigrationService {
         return value == null || value.isBlank() ? "LEGACY " + fallback : value;
     }
 
-    private static String tekKarakter(String value) {
-        return value == null || value.isBlank() ? null : value.substring(0, 1);
+    private static Boolean aktifDegeri(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return switch (value.trim().toUpperCase()) {
+            case "1", "A", "AKTIF", "TRUE", "E", "Y" -> Boolean.TRUE;
+            case "0", "P", "PASIF", "FALSE", "H", "N", "D", "S", "SIL", "SILINMIS" -> Boolean.FALSE;
+            default -> null;
+        };
+    }
+
+    private static EnvanterDetay envanterDetayiOlustur(Envanter item) {
+        Object mevcutDetay = alanOku(item, "detay");
+        if (mevcutDetay instanceof EnvanterDetay detay) {
+            return detay;
+        }
+
+        EnvanterDetay detay = new EnvanterDetay();
+        alanYaz(detay, "envanter", item);
+        alanYaz(detay, "guid", alanOku(item, "guid"));
+        alanYaz(item, "detay", detay);
+        return detay;
+    }
+
+    private static void alanYaz(Object entity, String alanAdi, Object value) {
+        try {
+            Field field = alan(entity.getClass(), alanAdi);
+            field.set(entity, value);
+        } catch (IllegalAccessException exception) {
+            throw new IllegalStateException("Entity alani yazilamadi: " + alanAdi, exception);
+        }
+    }
+
+    private static Object alanOku(Object entity, String alanAdi) {
+        try {
+            Field field = alan(entity.getClass(), alanAdi);
+            return field.get(entity);
+        } catch (IllegalAccessException exception) {
+            throw new IllegalStateException("Entity alani okunamadi: " + alanAdi, exception);
+        }
+    }
+
+    private static Field alan(Class<?> type, String alanAdi) {
+        Class<?> current = type;
+        while (current != null) {
+            try {
+                Field field = current.getDeclaredField(alanAdi);
+                field.setAccessible(true);
+                return field;
+            } catch (NoSuchFieldException ignored) {
+                current = current.getSuperclass();
+            }
+        }
+        throw new IllegalStateException("Entity alani bulunamadi: " + alanAdi);
     }
 
     private static String ilkDolu(String ilkDolu, String second) {

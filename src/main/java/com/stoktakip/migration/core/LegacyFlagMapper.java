@@ -2,7 +2,6 @@ package com.stoktakip.migration.core;
 
 import com.stoktakip.enums.SayimIslemi;
 import com.stoktakip.enums.SayimKapsami;
-import com.stoktakip.enums.HareketTuru;
 import com.stoktakip.enums.KayitDurumu;
 import com.stoktakip.enums.EvetHayirDegeri;
 
@@ -65,20 +64,4 @@ public final class LegacyFlagMapper {
         };
     }
 
-    public static HareketTuru hareketTuru(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return HareketTuru.BILINMIYOR;
-        }
-        String value = raw.trim().toUpperCase();
-        if (value.contains("IADE")) {
-            return HareketTuru.IADE_TALEBI;
-        }
-        if (value.contains("ZIMMET")) {
-            return HareketTuru.PERSONEL_ZIMMET;
-        }
-        if (value.contains("DEPO") || value.contains("TRANSFER")) {
-            return HareketTuru.TRANSFER;
-        }
-        return HareketTuru.BILINMIYOR;
-    }
 }

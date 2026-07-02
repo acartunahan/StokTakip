@@ -27,38 +27,6 @@ public class Aparat {
     @Column(name = "DURUM", length = 32)
     private String durum;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getGuid() {
-        return guid;
-    }
-
-    public void setGuid(String guid) {
-        this.guid = guid;
-    }
-
-    public LocalDateTime getOlusturmaTarihi() {
-        return olusturmaTarihi;
-    }
-
-    public void setOlusturmaTarihi(LocalDateTime olusturmaTarihi) {
-        this.olusturmaTarihi = olusturmaTarihi;
-    }
-
-    public String getDurum() {
-        return durum;
-    }
-
-    public void setDurum(String durum) {
-        this.durum = durum;
-    }
-
     @Column(name = "AD", length = 100, nullable = false)
     private String ad;
 
@@ -73,35 +41,4 @@ public class Aparat {
     @JoinColumn(name = "MODELGUID", referencedColumnName = "GUID")
     private Model model;
 
-    public String getAd() {
-        return ad;
-    }
-
-    public void setAd(String ad) {
-        this.ad = ad;
-    }
-
-    public String getAciklama() {
-        return aciklama;
-    }
-
-    public void setAciklama(String aciklama) {
-        this.aciklama = aciklama;
-    }
-
-    public Marka getMarka() {
-        return marka;
-    }
-
-    public void setMarka(Marka marka) {
-        this.marka = marka;
-    }
-
-    public Model getModel() {
-        return model;
-    }
-
-    public void setModel(Model model) {
-        this.model = model;
-    }
 }

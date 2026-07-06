@@ -68,7 +68,7 @@ public class KategoriMigrationService {
 
     private List<KategoriSatiri> sarfKategorileriOku() {
         String sql = """
-            SELECT GUID, PARENT, BASLIK
+            SELECT GUID, PARENT, TITLE
             FROM SARF_KATEGORI
             WHERE GUID IS NOT NULL
             """;
@@ -76,7 +76,7 @@ public class KategoriMigrationService {
             "SARF_KATEGORI",
             metin(rs.getObject("GUID")),
             metin(rs.getObject("PARENT")),
-            metin(rs.getObject("BASLIK")),
+            metin(rs.getObject("TITLE")),
             null,
             null
         ));
@@ -169,7 +169,7 @@ public class KategoriMigrationService {
 
     private static String varsayilanBaslik(KategoriSatiri satir) {
         if (satir.baslik() != null && !satir.baslik().isBlank()) {
-            return satir.baslik().length() <= 100 ? satir.baslik() : satir.baslik().substring(0, 100);
+            return satir.baslik().length() <= 120 ? satir.baslik() : satir.baslik().substring(0, 120);
         }
         return "LEGACY " + satir.guid();
     }

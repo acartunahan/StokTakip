@@ -9,16 +9,16 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "FIRMA")
 public class Firma {
-
-    @Column(name = "ID")
-    private Long id;
 
     @Id
     @Column(name = "GUID", length = 128)
@@ -67,7 +67,9 @@ public class Firma {
     @Column(name = "KAYNAK_ALANI", length = 32, nullable = false)
     private KaynakAlani kaynakAlani;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "DEPOGUID", referencedColumnName = "GUID")
-    private Depo depo;
+    @OneToMany(mappedBy = "firma", fetch = FetchType.LAZY)
+    private List<Ihale> ihaleler = new ArrayList<>();
+
+    @OneToMany(mappedBy = "firma", fetch = FetchType.LAZY)
+    private List<EnvanterDetay> envanterDetaylari = new ArrayList<>();
 }

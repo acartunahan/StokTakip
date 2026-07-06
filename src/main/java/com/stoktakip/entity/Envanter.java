@@ -10,9 +10,12 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.time.LocalDateTime;
 
 
@@ -29,6 +32,9 @@ public class Envanter {
 
     @Column(name = "SERI_NO", length = 100)
     private String seriNo;
+
+    @Column(name = "BARKOD", length = 100)
+    private String barkod;
 
     //birim
     @Column(name = "SUBE")
@@ -56,5 +62,23 @@ public class Envanter {
 
     @Enumerated(EnumType.STRING)
     private EnvanterTuru envanterTuru;
+
+    @OneToMany(mappedBy = "envanter", fetch = FetchType.LAZY)
+    private List<EnvanterAciklama> envanterAciklamalari = new ArrayList<>();
+
+    @OneToMany(mappedBy = "envanter", fetch = FetchType.LAZY)
+    private List<DepoZimmetHareket> depoZimmetHareketleri = new ArrayList<>();
+
+    @OneToMany(mappedBy = "envanter", fetch = FetchType.LAZY)
+    private List<PersonelZimmetHareket> personelZimmetHareketleri = new ArrayList<>();
+
+    @OneToMany(mappedBy = "envanter", fetch = FetchType.LAZY)
+    private List<SayimDetay> sayimDetaylari = new ArrayList<>();
+
+    @OneToMany(mappedBy = "envanter", fetch = FetchType.LAZY)
+    private List<IadeHavuzKaydi> iadeHavuzKayitlari = new ArrayList<>();
+
+    @OneToMany(mappedBy = "envanter", fetch = FetchType.LAZY)
+    private List<IadeOnayKaydi> iadeOnayKayitlari = new ArrayList<>();
 
 }

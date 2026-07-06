@@ -9,8 +9,11 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,5 +29,11 @@ public class Marka extends BaseEntity{
 
     @Column(name = "ACIKLAMA", length = 500)
     private String aciklama;
+
+    @OneToMany(mappedBy = "marka", fetch = FetchType.LAZY)
+    private List<Model> modeller = new ArrayList<>();
+
+    @OneToMany(mappedBy = "marka", fetch = FetchType.LAZY)
+    private List<SayimDetay> sayimDetaylari = new ArrayList<>();
 
 }

@@ -12,23 +12,14 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "APARAT")
-public class Aparat {
-
-    @Column(name = "ID")
-    private Long id;
+public class Aparat extends BaseEntity {
 
     @Id
     @Column(name = "GUID", length = 128)
     private String guid;
 
-    @Column(name = "OLUSTURMA_TARIHI")
-    private LocalDateTime olusturmaTarihi;
-
-    @Column(name = "DURUM", length = 32)
-    private String durum;
-
-    @Column(name = "AD", length = 100, nullable = false)
-    private String ad;
+    @Column(name = "APARAT_ADI", length = 100, nullable = false)
+    private String aparatAdi;
 
     @Column(name = "ACIKLAMA", length = 500)
     private String aciklama;

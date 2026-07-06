@@ -10,6 +10,9 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Table;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import java.util.ArrayList;
+import java.util.List;
 import java.time.LocalDateTime;
 
 @Entity
@@ -81,6 +84,9 @@ public class Sayim {
     @JoinColumn(name = "DEPO", referencedColumnName = "GUID")
     private Depo depo;
 
+    @OneToMany(mappedBy = "sayim", fetch = FetchType.LAZY)
+    private List<SayimDetay> sayimDetaylari = new ArrayList<>();
+
     public SayimKapsami getSayimKapsami() {
         return sayimKapsami;
     }
@@ -127,5 +133,13 @@ public class Sayim {
 
     public void setDepo(Depo depo) {
         this.depo = depo;
+    }
+
+    public List<SayimDetay> getSayimDetaylari() {
+        return sayimDetaylari;
+    }
+
+    public void setSayimDetaylari(List<SayimDetay> sayimDetaylari) {
+        this.sayimDetaylari = sayimDetaylari;
     }
 }

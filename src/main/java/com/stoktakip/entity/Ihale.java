@@ -6,15 +6,15 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "IHALE")
 public class Ihale {
-
-    @Column(name = "ID")
-    private Long id;
 
     @Id
     @Column(name = "GUID", length = 128)
@@ -65,5 +65,11 @@ public class Ihale {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "FIRMA_GUID", referencedColumnName = "GUID")
     private Firma firma;
+
+    @OneToMany(mappedBy = "ihale", fetch = FetchType.LAZY)
+    private List<EnvanterDetay> envanterDetaylari = new ArrayList<>();
+
+    @OneToMany(mappedBy = "ihale", fetch = FetchType.LAZY)
+    private List<SayimDetay> sayimDetaylari = new ArrayList<>();
 
 }

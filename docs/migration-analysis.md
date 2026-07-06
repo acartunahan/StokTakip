@@ -25,7 +25,7 @@ Eski sistemde foreign key constraint olmadığı için ilişkiler GUID kolonlar�
 - `Kategori`: `RESAT_SABIT_KOD`, `SARF_KATEGORI`
 - `Envanter`: `R_DEMIRBAS`, `R_SARFDEMIRBAS`
 - `EnvanterDetay`: Envanter ile ayni `GUID` uzerinden bire bir baglanan satin alma detaylari
-- `Aparat`, `EnvanterResim`, `EnvanterBarkod`, `EnvanterAciklama`, `DepoZimmetHareket`, `PersonelZimmetHareket`
+- `Aparat`, `EnvanterAciklama`, `DepoZimmetHareket`, `PersonelZimmetHareket`
 - `Sayim`, `SayimDetay`
 - `IadeHavuzKaydi`, `IadeOnayKaydi`
 - `SarfLogKaydi`, `SqlKaydi`
@@ -44,7 +44,7 @@ Eski sistemde foreign key constraint olmadığı için ilişkiler GUID kolonlar�
 | R_TUKETIMCINSLERI | TuketimCinsi | Sarf tüketim cinsi |
 | R_DEMIRBAS | Envanter, EnvanterDetay | `EnvanterTuru.DEMIRBAS`; alim yolu/turu, saymanlik no, ihale ve garanti bilgileri detaydadir |
 | R_SARFDEMIRBAS | Envanter, EnvanterDetay | `EnvanterTuru.SARF`; firma bilgisi detaydadir |
-| R_BARKOD | EnvanterBarkod | Demirbaş child kaydı |
+| R_BARKOD | Envanter.BARKOD | Demirbas barkod kolonu |
 | R_HAREKET | DepoZimmetHareket, PersonelZimmetHareket | `NERDEN`/`NEREYE` durumuna gore zimmet hareketi |
 | R_SAYIM_GENEL, R_SAYIM_YEREL | SayimDetay | Detay kayıtları |
 
@@ -59,7 +59,7 @@ Eski sistemde foreign key constraint olmadığı için ilişkiler GUID kolonlar�
 
 ## 6. Veri Göç Sırası
 
-Sıra: depo, marka, model, firma, ortak kategori, tüketim cinsi, ihale, demirbaş, sarf, aparat, resim, barkod, not, hareket, sayım, sayım detayları, iade, sarf log, SQL kayıt.
+Sıra: depo, marka, model, firma, ortak kategori, tüketim cinsi, ihale, demirbaş, sarf, aparat, barkod, not, hareket, sayım, sayım detayları, iade, sarf log, SQL kayıt.
 
 ## 7. Teknik Yaklaşım
 

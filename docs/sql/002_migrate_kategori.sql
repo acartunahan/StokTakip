@@ -2,15 +2,13 @@ INSERT INTO KATEGORI (
     GUID,
     PARENT,
     BASLIK,
-    TUR,
-    TARIH
+    AKTIF
 )
 SELECT
     sk.GUID,
-    sk.SARF_KATEGORIGUID,
-    NVL(SUBSTR(sk.BASLIK, 1, 100), 'LEGACY ' || SUBSTR(sk.GUID, 1, 93)),
-    'SARF',
-    NULL
+    sk.PARENT,
+    NVL(SUBSTR(sk.TITLE, 1, 120), 'LEGACY ' || SUBSTR(sk.GUID, 1, 113)),
+    1
 FROM SARF_KATEGORI sk
 WHERE sk.GUID IS NOT NULL
   AND NOT EXISTS (
@@ -23,15 +21,19 @@ INSERT INTO KATEGORI (
     GUID,
     PARENT,
     BASLIK,
-    TUR,
-    TARIH
+    OLUSTURMA_TARIHI,
+    AKTIF
 )
 SELECT
     rsk.GUID,
-    rsk.RESAT_SABIT_KODGUID,
-    NVL(SUBSTR(rsk.ADI, 1, 100), 'LEGACY ' || SUBSTR(rsk.GUID, 1, 93)),
-    'SABIT_KOD',
-    CAST(rsk.K_TARIH AS TIMESTAMP)
+    rsk.PARENT,
+    NVL(SUBSTR(rsk.AD, 1, 120), 'LEGACY ' || SUBSTR(rsk.GUID, 1, 113)),
+    CAST(rsk.K_TARIH AS TIMESTAMP),
+    CASE
+        WHEN UPPER(TRIM(rsk.DURUM)) IN ('1', 'A', 'AKTIF', 'TRUE', 'E', 'Y') THEN 1
+        WHEN UPPER(TRIM(rsk.DURUM)) IN ('0', 'P', 'PASIF', 'FALSE', 'H', 'N', 'D', 'S', 'SIL', 'SILINMIS') THEN 0
+        ELSE 1
+    END
 FROM RESAT_SABIT_KOD rsk
 WHERE rsk.GUID IS NOT NULL
   AND NOT EXISTS (

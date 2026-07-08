@@ -61,6 +61,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 @ConditionalOnProperty(prefix = "app.migration", name = "enabled", havingValue = "true")
@@ -98,6 +99,7 @@ public class LegacyMigrationService {
     private final TargetEntityWriter yazici;
     private final LegacyReferenceResolver cozucu;
     private final MigrationAuditService denetimServisi;
+    private final TransactionTemplate transactionTemplate;
     private final MigrationIdMapRepository idMapRepository;
     private final DepoRepository depoRepository;
     private final MarkaRepository markaRepository;
@@ -124,6 +126,7 @@ public class LegacyMigrationService {
         TargetEntityWriter yazici,
         LegacyReferenceResolver cozucu,
         MigrationAuditService denetimServisi,
+        TransactionTemplate transactionTemplate,
         MigrationIdMapRepository idMapRepository,
         DepoRepository depoRepository,
         MarkaRepository markaRepository,
@@ -149,6 +152,7 @@ public class LegacyMigrationService {
         this.yazici = yazici;
         this.cozucu = cozucu;
         this.denetimServisi = denetimServisi;
+        this.transactionTemplate = transactionTemplate;
         this.idMapRepository = idMapRepository;
         this.depoRepository = depoRepository;
         this.markaRepository = markaRepository;
@@ -316,7 +320,7 @@ public class LegacyMigrationService {
         yazici.yaz(context, row, "Depo", depoRepository, Depo::new, depot -> {
             depot.setAd(varsayilanMetin(row.string("ADI"), row.anahtar()));
             depot.setAciklama(row.string("ACIKLAMA"));
-            depot.setPersonelKodu(row.string("PERSONELKODU"));
+            depot.setPersonelKodu(sinirliMetin(context, row, "PERSONELKODU", 20));
         }, columns("ID", "GUID", "ADI", "ACIKLAMA", "DURUM", "K_TARIH", "PERSONELKODU"));
     }
 
@@ -461,9 +465,9 @@ public class LegacyMigrationService {
         yazici.yaz(context, row, "Envanter", envanterRepository, Envanter::new, item -> {
             alanYaz(item, "envanterTuru", EnvanterTuru.SARF);
             alanYaz(item, "envanterAdi", varsayilanMetin(row.string("TUR"), row.anahtar()));
-            alanYaz(item, "seriNo", row.string("SERINO"));
+            alanYaz(item, "seriNo", sinirliMetin(context, row, "SERINO", 100));
             alanYaz(item, "aciklama", row.string("ACIKLAMA"));
-            alanYaz(item, "model", cozucu.resatModel(context, row, "MODEL"));
+            alanYaz(item, "model", cozucu.sarfModel(context, row, "MODEL"));
             alanYaz(item, "depo", cozucu.depot(context, row, "ALANDEPO"));
             EnvanterDetay detail = envanterDetayiOlustur(item);
             alanYaz(detail, "firma", cozucu.sarfCompany(context, row, "FIRMA"));
@@ -527,9 +531,13 @@ public class LegacyMigrationService {
                 null
             );
             if (!context.dryRun()) {
-                idEslemeOlustur(context, row, hedefVarlikAdi, hedefGuid);
+                transactionTemplate.executeWithoutResult(status -> {
+                    idEslemeOlustur(context, row, hedefVarlikAdi, hedefGuid);
+                    denetimServisi.veriYuku(context, row, hedefVarlikAdi, hedefGuid, barkodKolonlari());
+                });
+            } else {
+                denetimServisi.veriYuku(context, row, hedefVarlikAdi, hedefGuid, barkodKolonlari());
             }
-            denetimServisi.veriYuku(context, row, hedefVarlikAdi, hedefGuid, barkodKolonlari());
             context.stats(row.tabloAdi()).atlandi();
             return;
         }
@@ -541,10 +549,12 @@ public class LegacyMigrationService {
             return;
         }
 
-        Envanter kaydedilen = envanterRepository.save(envanter);
-        String kaydedilenGuid = String.valueOf(alanOku(kaydedilen, "guid"));
-        idEslemeOlustur(context, row, hedefVarlikAdi, kaydedilenGuid);
-        denetimServisi.veriYuku(context, row, hedefVarlikAdi, kaydedilenGuid, barkodKolonlari());
+        transactionTemplate.executeWithoutResult(status -> {
+            Envanter kaydedilen = envanterRepository.save(envanter);
+            String kaydedilenGuid = String.valueOf(alanOku(kaydedilen, "guid"));
+            idEslemeOlustur(context, row, hedefVarlikAdi, kaydedilenGuid);
+            denetimServisi.veriYuku(context, row, hedefVarlikAdi, kaydedilenGuid, barkodKolonlari());
+        });
         context.stats(row.tabloAdi()).aktarildi();
     }
 
@@ -561,7 +571,7 @@ public class LegacyMigrationService {
     }
 
     private static Set<String> barkodKolonlari() {
-        return columns("ID", "MGUID", "BARKOD");
+        return columns("ID", "MGUID", "R_DEMIRBASGUID", "BARKOD");
     }
 
     private void notuAktar(MigrationContext context, LegacyRow row) {
@@ -570,7 +580,7 @@ public class LegacyMigrationService {
             note.setNotMetni(row.string("ACIKLAMA"));
             note.setZimmetliPersonelMetni(row.string("ZIMMETSAHIBI"));
             note.setEkleyen(row.string("EKLEYEN"));
-            note.setEkleyenPersonel(row.string("EKLEYENSICIL"));
+            note.setEkleyenPersonel(sinirliMetin(context, row, "EKLEYENSICIL", 20));
         }, columns("ID", "MGUID", "ACIKLAMA", "ZIMMETSAHIBI", "K_TARIH", "EKLEYEN", "EKLEYENSICIL"));
     }
 
@@ -658,10 +668,12 @@ public class LegacyMigrationService {
             return;
         }
 
-        DepoZimmetHareket kaydedilen = depoZimmetHareketRepository.save(hareket);
-        String hedefId = String.valueOf(kaydedilen.getId());
-        idEslemeOlustur(context, row, "DepoZimmetHareket", hedefId);
-        denetimServisi.veriYuku(context, row, "DepoZimmetHareket", hedefId, hareketKolonlari());
+        transactionTemplate.executeWithoutResult(status -> {
+            DepoZimmetHareket kaydedilen = depoZimmetHareketRepository.save(hareket);
+            String hedefId = String.valueOf(kaydedilen.getId());
+            idEslemeOlustur(context, row, "DepoZimmetHareket", hedefId);
+            denetimServisi.veriYuku(context, row, "DepoZimmetHareket", hedefId, hareketKolonlari());
+        });
         context.stats(row.tabloAdi()).aktarildi();
     }
 
@@ -676,10 +688,12 @@ public class LegacyMigrationService {
             return;
         }
 
-        PersonelZimmetHareket kaydedilen = personelZimmetHareketRepository.save(hareket);
-        String hedefId = String.valueOf(kaydedilen.getId());
-        idEslemeOlustur(context, row, "PersonelZimmetHareket", hedefId);
-        denetimServisi.veriYuku(context, row, "PersonelZimmetHareket", hedefId, hareketKolonlari());
+        transactionTemplate.executeWithoutResult(status -> {
+            PersonelZimmetHareket kaydedilen = personelZimmetHareketRepository.save(hareket);
+            String hedefId = String.valueOf(kaydedilen.getId());
+            idEslemeOlustur(context, row, "PersonelZimmetHareket", hedefId);
+            denetimServisi.veriYuku(context, row, "PersonelZimmetHareket", hedefId, hareketKolonlari());
+        });
         context.stats(row.tabloAdi()).aktarildi();
     }
 
@@ -776,7 +790,7 @@ public class LegacyMigrationService {
             log.setPersonelKodu(row.string("SICIL"));
             log.setAciklama(row.string("BILGI"));
             log.setIslem(row.string("ISLEM"));
-            log.setSarfMalzemeGuid(row.string("MALZEME"));
+            log.setSarfMalzemeGuid(sinirliMetin(context, row, "MALZEME", 64));
             log.setDepo(cozucu.depot(context, row, "DEPO"));
         }, columns("ID", "SICIL", "BILGI", "ISLEM", "MALZEME", "DEPO", "TARIH"));
     }
@@ -785,7 +799,7 @@ public class LegacyMigrationService {
         yazici.yaz(context, row, "SqlKaydi", sqlKaydiRepository, SqlKaydi::new, sql -> {
             sql.setAd(row.string("ADI"));
             sql.setIcerik(row.string("ICERIK"));
-            sql.setPersonelKodu(row.string("KULLANICI"));
+            sql.setPersonelKodu(sinirliMetin(context, row, "KULLANICI", 20));
         }, columns("ID", "GUID", "ADI", "ICERIK", "KULLANICI", "DURUM", "K_TARIH"));
     }
 
@@ -825,6 +839,22 @@ public class LegacyMigrationService {
 
     private static String varsayilanMetin(String value, String fallback) {
         return value == null || value.isBlank() ? "LEGACY " + fallback : value;
+    }
+
+    private String sinirliMetin(MigrationContext context, LegacyRow row, String column, int maxLength) {
+        String value = row.string(column);
+        if (value == null || value.length() <= maxLength) {
+            return value;
+        }
+        denetimServisi.hata(
+            context,
+            row,
+            column,
+            column + " hedef kolon uzunlugunu astigi icin " + maxLength
+                + " karaktere kisaltildi. Tam deger payload JSON icinde korunuyor.",
+            null
+        );
+        return value.substring(0, maxLength);
     }
 
     private static Boolean aktifDegeri(String value) {

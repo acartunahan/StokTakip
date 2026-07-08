@@ -14,6 +14,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @ConditionalOnProperty(prefix = "app.migration", name = "enabled", havingValue = "true")
@@ -27,6 +28,7 @@ public class TargetEntityWriter {
         this.denetimServisi = denetimServisi;
     }
 
+    @Transactional
     public <T> Optional<T> yaz(
         MigrationContext context,
         LegacyRow row,
@@ -45,7 +47,18 @@ public class TargetEntityWriter {
             return Optional.empty();
         }
 
-        T entity = varOlanKaydiBul(row, veriErisim).orElseGet(factory);
+        Optional<T> mevcutEntity = varOlanKaydiBul(row, veriErisim);
+        if (mevcutEntity.isPresent()) {
+            denetimServisi.hata(
+                context,
+                row,
+                null,
+                "Hedef GUID zaten mevcut oldugu icin kayit update edilecek: "
+                    + hedefVarlikAdi + ".GUID=" + entityGuid(row),
+                null
+            );
+        }
+        T entity = mevcutEntity.orElseGet(factory);
         kaynakAlanlariUygula(row, entity);
         esleyici.accept(entity);
 

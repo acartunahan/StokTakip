@@ -25,7 +25,7 @@ public class LegacySourceReader {
 
     public List<LegacyRow> parcaOku(LegacyTableSpec spec, int offset, int chunkSize) {
         String sql = "select * from " + spec.tabloAdi()
-            + " order by " + spec.siralamaKolonu() + " nulls last"
+            + " order by " + spec.siralamaKolonu() + " nulls last, rowid"
             + " offset ? rows fetch next ? rows only";
         return eskiJdbcTemplate.queryForList(sql, offset, chunkSize)
             .stream()

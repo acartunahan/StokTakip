@@ -49,9 +49,13 @@ import com.stoktakip.repository.SayimRepository;
 import com.stoktakip.repository.SarfLogKaydiRepository;
 import com.stoktakip.repository.IhaleRepository;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HexFormat;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -66,6 +70,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Service
 @ConditionalOnProperty(prefix = "app.migration", name = "enabled", havingValue = "true")
 public class LegacyMigrationService {
+
+    private static final HexFormat HEX_FORMAT = HexFormat.of();
 
     private static final LegacyTableSpec[] VERI_GOC_SIRASI = {
         LegacyTableSpec.RESAT_DEPO,
@@ -268,7 +274,7 @@ public class LegacyMigrationService {
             return;
         }
         if (!ziyaretEdiliyor.add(guid)) {
-            return;
+            throw new IllegalStateException("Kategori parent dongusu bulundu: " + guid);
         }
 
         LegacyRow parent = guidSatirlari.get(row.string(parentKolonu));
@@ -416,7 +422,7 @@ public class LegacyMigrationService {
 
     private void sabitKoduAktar(MigrationContext context, LegacyRow row) {
         yazici.yaz(context, row, "Kategori", kategoriRepository, Kategori::new, kategori -> {
-            alanYaz(kategori, "parent", row.string("PARENT"));
+            alanYaz(kategori, "parent", kategoriParentiniCoz(context, row));
             alanYaz(kategori, "baslik", varsayilanMetin(row.string("AD"), row.anahtar()));
             alanYaz(kategori, "aktif", aktifDegeri(row.string("DURUM")));
             alanYaz(kategori, "olusturmaTarihi", row.dateTime("K_TARIH"));
@@ -432,9 +438,38 @@ public class LegacyMigrationService {
 
     private void kategoriyiAktar(MigrationContext context, LegacyRow row) {
         yazici.yaz(context, row, "Kategori", kategoriRepository, Kategori::new, kategori -> {
-            alanYaz(kategori, "parent", row.string("PARENT"));
+            alanYaz(kategori, "parent", kategoriParentiniCoz(context, row));
             alanYaz(kategori, "baslik", varsayilanMetin(row.string("TITLE"), row.anahtar()));
         }, columns("GUID", "PARENT", "TITLE"));
+    }
+
+    private Kategori kategoriParentiniCoz(MigrationContext context, LegacyRow row) {
+        String parentGuid = row.string("PARENT");
+        if (parentGuid == null || parentGuid.isBlank()) {
+            return null;
+        }
+
+        String kategoriGuid = hedefGuid(row);
+        if (parentGuid.equals(kategoriGuid)) {
+            context.stats(row.tabloAdi()).eksikIliski();
+            throw new IllegalStateException(row.tabloAdi() + ".PARENT kategori kendi GUID degeri olamaz: " + parentGuid);
+        }
+
+        Kategori parent = kategoriRepository.findByGuid(parentGuid)
+            .orElseThrow(() -> {
+                context.stats(row.tabloAdi()).eksikIliski();
+                return new IllegalStateException(
+                    row.tabloAdi() + ".PARENT hedef KATEGORI.GUID icinde bulunamadi: " + parentGuid
+                );
+            });
+        if (kategoriParentDongusuOlusur(kategoriGuid, parent)) {
+            context.stats(row.tabloAdi()).eksikIliski();
+            throw new IllegalStateException(
+                row.tabloAdi() + ".PARENT kategori parent dongusu olusturur: "
+                    + kategoriGuid + " -> " + parentGuid
+            );
+        }
+        return parent;
     }
 
     private void demirbasiAktar(MigrationContext context, LegacyRow row) {
@@ -868,6 +903,32 @@ public class LegacyMigrationService {
         };
     }
 
+    private static boolean kategoriParentDongusuOlusur(String kategoriGuid, Kategori parent) {
+        Set<String> ziyaretEdilen = new HashSet<>();
+        Kategori current = parent;
+        while (current != null) {
+            String currentGuid = stringDegeri(alanOku(current, "guid"));
+            if (currentGuid == null || !ziyaretEdilen.add(currentGuid)) {
+                return true;
+            }
+            if (currentGuid.equals(kategoriGuid)) {
+                return true;
+            }
+            Object next = alanOku(current, "parent");
+            current = next instanceof Kategori kategori ? kategori : null;
+        }
+        return false;
+    }
+
+    private static String hedefGuid(LegacyRow row) {
+        String guid = row.guid();
+        return guid == null || guid.isBlank() ? row.anahtar() : guid;
+    }
+
+    private static String stringDegeri(Object value) {
+        return value == null ? null : String.valueOf(value);
+    }
+
     private static EnvanterDetay envanterDetayiOlustur(Envanter item) {
         Object mevcutDetay = alanOku(item, "detay");
         if (mevcutDetay instanceof EnvanterDetay detay) {
@@ -875,10 +936,24 @@ public class LegacyMigrationService {
         }
 
         EnvanterDetay detay = new EnvanterDetay();
+        Object envanterGuid = alanOku(item, "guid");
         alanYaz(detay, "envanter", item);
-        alanYaz(detay, "guid", alanOku(item, "guid"));
+        alanYaz(detay, "guid", envanterDetayGuid(envanterGuid));
         alanYaz(item, "detay", detay);
         return detay;
+    }
+
+    private static String envanterDetayGuid(Object envanterGuid) {
+        if (envanterGuid == null) {
+            throw new IllegalStateException("EnvanterDetay GUID uretmek icin Envanter.GUID bos olamaz.");
+        }
+        String source = "ENVANTER_DETAY:" + envanterGuid;
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HEX_FORMAT.formatHex(digest.digest(source.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 algoritmasi bulunamadi.", exception);
+        }
     }
 
     private static void alanYaz(Object entity, String alanAdi, Object value) {

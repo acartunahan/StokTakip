@@ -6,7 +6,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
@@ -20,8 +19,7 @@ public class EnvanterDetay extends BaseEntity{
     private String guid;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @MapsId
-    @JoinColumn(name = "GUID", referencedColumnName = "GUID")
+    @JoinColumn(name = "ENVANTER_GUID", referencedColumnName = "GUID", nullable = false, unique = true)
     private Envanter envanter;
 
     @Column(name = "ALIM_YOLU")

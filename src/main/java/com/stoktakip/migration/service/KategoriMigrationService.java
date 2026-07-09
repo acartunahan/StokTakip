@@ -50,7 +50,6 @@ public class KategoriMigrationService {
                 continue;
             }
 
-            parentDogrula(satir);
             Optional<Kategori> mevcut = kategoriRepository.findByGuid(satir.guid());
             Kategori kategori = mevcut.orElseGet(Kategori::new);
             kategoriyeYaz(kategori, satir);
@@ -100,7 +99,7 @@ public class KategoriMigrationService {
 
     private void kategoriyeYaz(Kategori kategori, KategoriSatiri satir) {
         alanYaz(kategori, "guid", satir.guid());
-        alanYaz(kategori, "parent", satir.parent());
+        alanYaz(kategori, "parent", parentCoz(satir));
         alanYaz(kategori, "baslik", varsayilanBaslik(satir));
         if (satir.aktif() != null) {
             alanYaz(kategori, "aktif", satir.aktif());
@@ -110,16 +109,27 @@ public class KategoriMigrationService {
         }
     }
 
-    private void parentDogrula(KategoriSatiri satir) {
-        if (satir.parent() == null || satir.parent().isBlank()) {
-            return;
+    private Kategori parentCoz(KategoriSatiri satir) {
+        String parentGuid = satir.parent();
+        if (parentGuid == null || parentGuid.isBlank()) {
+            return null;
         }
-        if (kategoriRepository.existsById(satir.parent())) {
-            return;
+        if (parentGuid.equals(satir.guid())) {
+            throw new IllegalStateException(
+                satir.kaynakTablo() + ".PARENT kategori kendi GUID degeri olamaz: " + parentGuid
+            );
         }
-        throw new IllegalStateException(
-            satir.kaynakTablo() + ".PARENT hedef KATEGORI.GUID icinde bulunamadi: " + satir.parent()
-        );
+        Kategori parent = kategoriRepository.findByGuid(parentGuid)
+            .orElseThrow(() -> new IllegalStateException(
+                satir.kaynakTablo() + ".PARENT hedef KATEGORI.GUID icinde bulunamadi: " + parentGuid
+            ));
+        if (kategoriParentDongusuOlusur(satir.guid(), parent)) {
+            throw new IllegalStateException(
+                satir.kaynakTablo() + ".PARENT kategori parent dongusu olusturur: "
+                    + satir.guid() + " -> " + parentGuid
+            );
+        }
+        return parent;
     }
 
     private static List<KategoriSatiri> parentOncelikliSirala(List<KategoriSatiri> satirlar) {
@@ -218,6 +228,32 @@ public class KategoriMigrationService {
             field.set(entity, value);
         } catch (IllegalAccessException exception) {
             throw new IllegalStateException("Entity alani yazilamadi: " + alanAdi, exception);
+        }
+    }
+
+    private static boolean kategoriParentDongusuOlusur(String kategoriGuid, Kategori parent) {
+        Set<String> ziyaretEdilen = new HashSet<>();
+        Kategori current = parent;
+        while (current != null) {
+            String currentGuid = metin(alanOku(current, "guid"));
+            if (currentGuid == null || !ziyaretEdilen.add(currentGuid)) {
+                return true;
+            }
+            if (currentGuid.equals(kategoriGuid)) {
+                return true;
+            }
+            Object next = alanOku(current, "parent");
+            current = next instanceof Kategori kategori ? kategori : null;
+        }
+        return false;
+    }
+
+    private static Object alanOku(Object entity, String alanAdi) {
+        try {
+            Field field = alan(entity.getClass(), alanAdi);
+            return field.get(entity);
+        } catch (IllegalAccessException exception) {
+            throw new IllegalStateException("Entity alani okunamadi: " + alanAdi, exception);
         }
     }
 

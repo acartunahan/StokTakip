@@ -4,6 +4,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
@@ -18,13 +20,17 @@ public class Kategori extends BaseEntity{
     @Column(name = "GUID", length = 128, nullable = false)
     private String guid;
 
-    @Column(name = "PARENT", length = 128)
-    private String parent;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "PARENT", referencedColumnName = "GUID", nullable = true)
+    private Kategori parent;
 
     @Column(name = "BASLIK", length = 120, nullable = false)
     private String baslik;
 
     @OneToMany(mappedBy = "kategori", fetch = FetchType.LAZY)
     private List<Model> modeller = new ArrayList<>();
+
+    @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+    private List<Kategori> altKategoriler = new ArrayList<>();
 
 }

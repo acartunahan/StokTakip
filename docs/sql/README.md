@@ -12,6 +12,8 @@ Veri/backfill amacli opsiyonel dosyalar:
 - `005_backfill_envanter_detay.sql`: Daha once satin alma kolonlari `ENVANTER` uzerindeyken olusmus hedef semalarda `ENVANTER_DETAY` doldurmak icin kullanilir. Yeni kurulumda calistirilmaz.
 - `006_add_legacy_table_name_to_migration_audit.sql`: Daha once audit tablolari olusmus semalarda `ESKI_TABLO_ADI` kolonlarini eklemek icin kullanilir.
 - `009_move_envanter_barkod_to_envanter.sql`: Daha once `ENVANTER_BARKOD` hedef tablosu olusmus semalarda barkod degerini `ENVANTER.BARKOD` kolonuna tasir ve eski hedef tabloyu kaldirir. Yeni kurulumda calistirilmaz.
+- `010_split_envanter_detay_identity.sql`: Daha once `ENVANTER_DETAY.GUID` ayni anda hem PK hem `ENVANTER(GUID)` FK olarak olusmus semalarda `ENVANTER_GUID` kolonunu ekler ve one-to-one FK'yi bu kolona tasir. Yeni kurulumda calistirilmaz.
+- `011_update_kategori_parent_fk.sql`: Daha once `KATEGORI.PARENT` self-FK constraint'i eski adla olusmus semalarda constraint adini `FK_KATEGORI_PARENT_GUID` olacak sekilde duzeltir ve parent index'ini garanti eder. Yeni kurulumda calistirilmaz.
 
 Legacy test verisi icin:
 

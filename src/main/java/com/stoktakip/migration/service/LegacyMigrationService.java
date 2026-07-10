@@ -24,6 +24,8 @@ import com.stoktakip.entity.SarfLogKaydi;
 import com.stoktakip.entity.Ihale;
 import com.stoktakip.migration.config.MigrationProperties;
 import com.stoktakip.migration.core.LegacyFlagMapper;
+import com.stoktakip.migration.core.LegacyHareketHedefi;
+import com.stoktakip.migration.core.LegacyHareketMapper;
 import com.stoktakip.migration.core.LegacyRow;
 import com.stoktakip.migration.core.LegacyTableSpec;
 import com.stoktakip.migration.core.MigrationContext;
@@ -641,27 +643,26 @@ public class LegacyMigrationService {
             return;
         }
 
-        if (depoHareketiMi(row)) {
-            DepoZimmetHareket hareket = new DepoZimmetHareket();
-            ortakZimmetHareketAlanlariniYaz(hareket, kaynakId, envanter, row);
-            hareket.setMevcutDepo(depoVarsa(context, row, "NERDEN"));
-            hareket.setGidecegiDepo(depoVarsa(context, row, "NEREYE"));
-            depoZimmetHareketiniKaydet(context, row, hareket);
-            return;
+        LegacyHareketHedefi hedef = LegacyHareketMapper.zimmetHareketHedefi(row);
+        switch (hedef) {
+            case DEPO_ZIMMET_HAREKET -> {
+                DepoZimmetHareket hareket = new DepoZimmetHareket();
+                ortakZimmetHareketAlanlariniYaz(hareket, kaynakId, envanter, row);
+                hareket.setMevcutDepo(depoVarsa(context, row, "NERDEN"));
+                hareket.setGidecegiDepo(depoVarsa(context, row, "NEREYE"));
+                depoZimmetHareketiniKaydet(context, row, hareket);
+            }
+            case PERSONEL_ZIMMET_HAREKET -> {
+                PersonelZimmetHareket hareket = new PersonelZimmetHareket();
+                ortakZimmetHareketAlanlariniYaz(hareket, kaynakId, envanter, row);
+                personelZimmetHareketiniKaydet(context, row, hareket);
+            }
         }
-
-        PersonelZimmetHareket hareket = new PersonelZimmetHareket();
-        ortakZimmetHareketAlanlariniYaz(hareket, kaynakId, envanter, row);
-        personelZimmetHareketiniKaydet(context, row, hareket);
     }
 
     private boolean zimmetHareketiVarMi(Long kaynakId) {
         return depoZimmetHareketRepository.existsById(kaynakId)
             || personelZimmetHareketRepository.existsById(kaynakId);
-    }
-
-    private static boolean depoHareketiMi(LegacyRow row) {
-        return row.string("NERDEN") != null || row.string("NEREYE") != null;
     }
 
     private Depo depoVarsa(MigrationContext context, LegacyRow row, String column) {

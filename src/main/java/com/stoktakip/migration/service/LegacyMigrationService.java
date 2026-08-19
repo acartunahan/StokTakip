@@ -2,7 +2,6 @@ package com.stoktakip.migration.service;
 
 import com.stoktakip.enums.SayimKapsami;
 import com.stoktakip.enums.EnvanterTuru;
-import com.stoktakip.enums.KaynakAlani;
 import com.stoktakip.entity.Aparat;
 import com.stoktakip.entity.DepoZimmetHareket;
 import com.stoktakip.entity.Marka;
@@ -368,7 +367,7 @@ public class LegacyMigrationService {
     private void resatFirmayiAktar(MigrationContext context, LegacyRow row) {
         yazici.yaz(context, row, "Firma", firmaRepository, Firma::new, company -> {
             firmayiEsle(row, company, "FIRMA_ADI", "NOTLAR", "YETKILITEL", "IRTIBATTEL");
-            alanYaz(company, "kaynakAlani", KaynakAlani.DEMIRBAS);
+            alanYaz(company, "kaynakAlani", EnvanterTuru.DEMIRBAS);
         }, columns("GUID", "FIRMA_ADI", "YETKILI", "YETKILITEL", "IRTIBAT", "IRTIBATTEL",
             "TEL1", "TEL2", "FAX", "WEB", "ADRES", "NOTLAR", "DURUM", "K_TARIH"));
     }
@@ -376,7 +375,7 @@ public class LegacyMigrationService {
     private void sarfFirmayiAktar(MigrationContext context, LegacyRow row) {
         yazici.yaz(context, row, "Firma", firmaRepository, Firma::new, company -> {
             firmayiEsle(row, company, "AD", "NOTE", "YETKILI_TEL", "IRTIBAT_TEL");
-            alanYaz(company, "kaynakAlani", KaynakAlani.SARF);
+            alanYaz(company, "kaynakAlani", EnvanterTuru.SARF);
         }, columns("GUID", "AD", "YETKILI", "YETKILI_TEL", "IRTIBAT", "IRTIBAT_TEL", "TEL1", "TEL2",
             "FAX", "WEB", "ADRES", "NOTE"));
     }

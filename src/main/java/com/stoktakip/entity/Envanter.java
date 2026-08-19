@@ -72,6 +72,9 @@ public class Envanter {
     @OneToMany(mappedBy = "envanter", fetch = FetchType.LAZY)
     private List<PersonelZimmetHareket> personelZimmetHareketleri = new ArrayList<>();
 
+    @OneToMany(mappedBy = "anaEnvanter", fetch = FetchType.LAZY)
+    private List<Aparat> aparatlar = new ArrayList<>();
+
     @OneToMany(mappedBy = "envanter", fetch = FetchType.LAZY)
     private List<SayimDetay> sayimDetaylari = new ArrayList<>();
 
@@ -80,5 +83,16 @@ public class Envanter {
 
     @OneToMany(mappedBy = "envanter", fetch = FetchType.LAZY)
     private List<IadeOnayKaydi> iadeOnayKayitlari = new ArrayList<>();
+
+    public String getGuid() { return guid; }
+    public void setGuid(String guid) { this.guid = guid; }
+    public Depo getDepo() { return depo; }
+    public void setDepo(Depo depo) { this.depo = depo; }
+    public EnvanterTuru getEnvanterTuru() { return envanterTuru; }
+    public void setEnvanterTuru(EnvanterTuru envanterTuru) { this.envanterTuru = envanterTuru; }
+    public String getEnvanterAdi() { return envanterAdi; }
+    public void setEnvanterAdi(String envanterAdi) { this.envanterAdi = envanterAdi; }
+    public List<Aparat> getAparatlar() { return aparatlar; }
+    public void setAparatlar(List<Aparat> aparatlar) { this.aparatlar = aparatlar; }
 
 }

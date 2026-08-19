@@ -1,7 +1,7 @@
 package com.stoktakip.entity;
 
 import jakarta.persistence.Id;
-import com.stoktakip.enums.KaynakAlani;
+import com.stoktakip.enums.EnvanterTuru;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -65,7 +65,7 @@ public class Firma {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "KAYNAK_ALANI", length = 32, nullable = false)
-    private KaynakAlani kaynakAlani;
+    private EnvanterTuru kaynakAlani;
 
     @OneToMany(mappedBy = "firma", fetch = FetchType.LAZY)
     private List<Ihale> ihaleler = new ArrayList<>();

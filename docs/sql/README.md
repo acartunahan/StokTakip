@@ -5,6 +5,7 @@ Yeni hedef sema kurulumu icin:
 1. `001_create_kategori.sql`
 2. `003_create_missing_target_schema.sql`
 3. `004_create_envanter_detay.sql`
+4. `012_extend_zimmet_for_sarf_and_aparat.sql`
 
 Veri/backfill amacli opsiyonel dosyalar:
 
@@ -14,6 +15,8 @@ Veri/backfill amacli opsiyonel dosyalar:
 - `009_move_envanter_barkod_to_envanter.sql`: Daha once `ENVANTER_BARKOD` hedef tablosu olusmus semalarda barkod degerini `ENVANTER.BARKOD` kolonuna tasir ve eski hedef tabloyu kaldirir. Yeni kurulumda calistirilmaz.
 - `010_split_envanter_detay_identity.sql`: Daha once `ENVANTER_DETAY.GUID` ayni anda hem PK hem `ENVANTER(GUID)` FK olarak olusmus semalarda `ENVANTER_GUID` kolonunu ekler ve one-to-one FK'yi bu kolona tasir. Yeni kurulumda calistirilmaz.
 - `011_update_kategori_parent_fk.sql`: Daha once `KATEGORI.PARENT` self-FK constraint'i eski adla olusmus semalarda constraint adini `FK_KATEGORI_PARENT_GUID` olacak sekilde duzeltir ve parent index'ini garanti eder. Yeni kurulumda calistirilmaz.
+
+`012_extend_zimmet_for_sarf_and_aparat.sql` hem yeni hem mevcut hedef semalarda bir kez calistirilir. Yalnizca yeni uygulamanin zimmet kolonlarini, FK/index/check constraint'lerini ve yeni hareket ID sequence'lerini ekler; legacy semaya veya veri goc tablolariyla verilerine dokunmaz.
 
 Legacy test verisi icin:
 

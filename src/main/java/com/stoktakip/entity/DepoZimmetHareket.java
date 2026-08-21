@@ -37,6 +37,12 @@ public class DepoZimmetHareket extends BaseEntity {
     @Column(name = "ZIMMET_TURU", length = 100)
     private String zimmetTuru;
 
+    @Column(name = "ADET")
+    private Long adet;
+
+    @Column(name = "TUR", length = 20)
+    private String tur;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "MEVCUT_DEPO_GUID", referencedColumnName = "GUID")
     private Depo mevcutDepo;
@@ -84,6 +90,22 @@ public class DepoZimmetHareket extends BaseEntity {
 
     public void setZimmetTuru(String zimmetTuru) {
         this.zimmetTuru = zimmetTuru;
+    }
+
+    public Long getAdet() {
+        return adet;
+    }
+
+    public void setAdet(Long adet) {
+        this.adet = adet;
+    }
+
+    public String getTur() {
+        return tur;
+    }
+
+    public void setTur(String tur) {
+        this.tur = tur;
     }
 
     public Depo getMevcutDepo() {

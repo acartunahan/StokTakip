@@ -22,7 +22,7 @@ Veri/backfill amacli opsiyonel dosyalar:
 Legacy test verisi icin:
 
 1. `007_create_legacy_test_schema.sql`: Sadece bos/local legacy test semasinda minimal kaynak tablolarini olusturur. Gercek legacy DB'de calistirilmaz.
-2. `008_seed_legacy_test_data.sql`: Migration'i test etmek icin desteklenen legacy kaynak tablolarina 10'ar iliskili demo satir basar. Tekrar calistirilabilir `MERGE` ifadeleri kullanir.
+2. `008_seed_legacy_test_data.sql`: Migration'i test etmek icin desteklenen legacy kaynak tablolarina iliskili demo satirlar basar. Tekrar calistirilabilir `MERGE` ifadeleri kullanir.
 
 Docker Compose ile gelen local Oracle container'larini ayaga kaldirma:
 

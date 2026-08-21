@@ -81,6 +81,8 @@ public class LegacyMigrationService {
         LegacyTableSpec.SARF_FIRMA,
         LegacyTableSpec.SARF_KATEGORI,
         LegacyTableSpec.RESAT_IHALE,
+        LegacyTableSpec.R_TUKETIMCINSLERI,
+        LegacyTableSpec.R_SARFDEMIRBAS,
         LegacyTableSpec.R_DEMIRBAS,
         LegacyTableSpec.R_BARKOD,
         LegacyTableSpec.R_DEMIRBAS_ACIKLAMA,
@@ -293,6 +295,8 @@ public class LegacyMigrationService {
             case RESAT_IHALE -> ihaleyiAktar(context, row);
             case RESAT_SABIT_KOD -> sabitKoduAktar(context, row);
             case SARF_KATEGORI -> kategoriyiAktar(context, row);
+            case R_TUKETIMCINSLERI -> tuketimCinsiniEnvantereAktar(context, row);
+            case R_SARFDEMIRBAS -> sarfHareketiniAktar(context, row);
             case R_DEMIRBAS -> demirbasiAktar(context, row);
             case R_BARKOD -> barkoduAktar(context, row);
             case R_DEMIRBAS_ACIKLAMA -> notuAktar(context, row);
@@ -474,6 +478,68 @@ public class LegacyMigrationService {
             "ILSUBEDBASNO", "ALIM_TUR"));
     }
 
+    private void tuketimCinsiniEnvantereAktar(MigrationContext context, LegacyRow row) {
+        yazici.yaz(context, row, "Envanter", envanterRepository, Envanter::new, item -> {
+            alanYaz(item, "envanterTuru", EnvanterTuru.SARF);
+            alanYaz(item, "envanterAdi", varsayilanMetin(row.string("ADI"), row.anahtar()));
+            alanYaz(item, "seriNo", row.string("SERINO"));
+            alanYaz(item, "aciklama", row.string("ACIKLAMA"));
+            alanYaz(item, "model", cozucu.sarfModel(context, row, "MODEL"));
+            alanYaz(item, "depo", cozucu.depot(context, row, "ALANDEPO"));
+            EnvanterDetay detay = envanterDetayiOlustur(item);
+            alanYaz(detay, "firma", cozucu.sarfCompany(context, row, "FIRMA"));
+        }, columns("ID", "GUID", "ADI", "MODEL", "FIRMA", "SERINO", "A_TARIH",
+            "ALANDEPO", "ACIKLAMA", "DURUM", "K_TARIH"));
+    }
+
+    private void sarfHareketiniAktar(MigrationContext context, LegacyRow row) {
+        String hedefVarlikAdi = "DepoZimmetHareket";
+        if (idMapRepository
+            .findByEskiTabloAdiAndEskiAnahtarAndHedefVarlikAdi(row.tabloAdi(), row.anahtar(), hedefVarlikAdi)
+            .isPresent()) {
+            context.stats(row.tabloAdi()).tekrar();
+            context.stats(row.tabloAdi()).atlandi();
+            return;
+        }
+
+        Envanter envanter = cozucu.sarfInventory(context, row, "ADI");
+        if (envanter == null) {
+            if (row.string("ADI") == null) {
+                denetimServisi.hata(
+                    context,
+                    row,
+                    "ADI",
+                    "R_SARFDEMIRBAS.ADI bos oldugu icin ilgili Envanter bulunamadi.",
+                    null
+                );
+            }
+            context.stats(row.tabloAdi()).atlandi();
+            return;
+        }
+
+        DepoZimmetHareket hareket = new DepoZimmetHareket();
+        if (!context.dryRun()) {
+            hareket.setId(depoZimmetHareketRepository.nextId());
+        }
+        hareket.setEnvanter(envanter);
+        hareket.setZimmetTuru(EnvanterTuru.SARF.name());
+        hareket.setAdet(guvenliLong(context, row, "ADET"));
+        hareket.setTur(sinirliMetin(context, row, "TUR", 20));
+        hareket.setAciklama(row.string("ACIKLAMA"));
+        hareket.setAktif(aktifDegeri(row.string("DURUM")));
+        hareket.setOlusturmaTarihi(row.dateTime("K_TARIH"));
+        sarfHareketDeposunuAta(hareket, envanter.getDepo());
+        depoZimmetHareketiniKaydet(context, row, hareket, sarfHareketKolonlari());
+    }
+
+    private static void sarfHareketDeposunuAta(DepoZimmetHareket hareket, Depo depo) {
+        if ("gelen".equalsIgnoreCase(hareket.getTur())) {
+            hareket.setGidecegiDepo(depo);
+        } else {
+            hareket.setMevcutDepo(depo);
+        }
+    }
+
     private void barkoduAktar(MigrationContext context, LegacyRow row) {
         String hedefVarlikAdi = "Envanter";
         if (idMapRepository
@@ -641,9 +707,18 @@ public class LegacyMigrationService {
     }
 
     private void depoZimmetHareketiniKaydet(MigrationContext context, LegacyRow row, DepoZimmetHareket hareket) {
+        depoZimmetHareketiniKaydet(context, row, hareket, hareketKolonlari());
+    }
+
+    private void depoZimmetHareketiniKaydet(
+        MigrationContext context,
+        LegacyRow row,
+        DepoZimmetHareket hareket,
+        Set<String> mappedColumns
+    ) {
         if (context.dryRun()) {
             context.stats(row.tabloAdi()).aktarildi();
-            denetimServisi.veriYuku(context, row, "DepoZimmetHareket", null, hareketKolonlari());
+            denetimServisi.veriYuku(context, row, "DepoZimmetHareket", null, mappedColumns);
             return;
         }
 
@@ -651,7 +726,7 @@ public class LegacyMigrationService {
             DepoZimmetHareket kaydedilen = depoZimmetHareketRepository.save(hareket);
             String hedefId = String.valueOf(kaydedilen.getId());
             idEslemeOlustur(context, row, "DepoZimmetHareket", hedefId);
-            denetimServisi.veriYuku(context, row, "DepoZimmetHareket", hedefId, hareketKolonlari());
+            denetimServisi.veriYuku(context, row, "DepoZimmetHareket", hedefId, mappedColumns);
         });
         context.stats(row.tabloAdi()).aktarildi();
     }
@@ -697,6 +772,10 @@ public class LegacyMigrationService {
 
     private static Set<String> hareketKolonlari() {
         return columns("ID", "MGUID", "ADI", "NERDEN", "NEREYE", "KULLANICI", "ACIKLAMA", "K_TARIH");
+    }
+
+    private static Set<String> sarfHareketKolonlari() {
+        return columns("ID", "GUID", "ADI", "ADET", "TUR", "ACIKLAMA", "DURUM", "K_TARIH");
     }
 
     private void sayimiAktar(MigrationContext context, LegacyRow row) {
@@ -795,7 +874,8 @@ public class LegacyMigrationService {
             case RESAT_IHALE -> ihaleRepository.count();
             case RESAT_SABIT_KOD -> kategoriRepository.count();
             case SARF_KATEGORI -> kategoriRepository.count();
-            case R_DEMIRBAS -> envanterRepository.count();
+            case R_DEMIRBAS, R_TUKETIMCINSLERI -> envanterRepository.count();
+            case R_SARFDEMIRBAS -> depoZimmetHareketRepository.count();
             case R_BARKOD -> envanterRepository.countByBarkodIsNotNull();
             case R_DEMIRBAS_ACIKLAMA -> envanterAciklamaRepository.count();
             case R_HAREKET -> depoZimmetHareketRepository.count() + personelZimmetHareketRepository.count();
@@ -832,6 +912,21 @@ public class LegacyMigrationService {
             null
         );
         return value.substring(0, maxLength);
+    }
+
+    private Long guvenliLong(MigrationContext context, LegacyRow row, String column) {
+        try {
+            return row.longValue(column);
+        } catch (RuntimeException exception) {
+            denetimServisi.hata(
+                context,
+                row,
+                column,
+                column + " Long degerine donusturulemedi: " + row.string(column),
+                exception
+            );
+            return null;
+        }
     }
 
     private static Boolean aktifDegeri(String value) {

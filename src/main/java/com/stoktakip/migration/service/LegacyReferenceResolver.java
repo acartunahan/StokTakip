@@ -102,6 +102,10 @@ public class LegacyReferenceResolver {
         return coz(context, row, column, "R_DEMIRBAS", row.string(column), envanterRepository);
     }
 
+    public Envanter sarfInventory(MigrationContext context, LegacyRow row, String column) {
+        return coz(context, row, column, "R_TUKETIMCINSLERI", row.string(column), envanterRepository);
+    }
+
     public Sayim stockCount(MigrationContext context, LegacyRow row, String column) {
         return coz(context, row, column, "R_SAYIM", row.string(column), sayimRepository);
     }

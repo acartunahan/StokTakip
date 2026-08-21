@@ -14,7 +14,6 @@ public enum LegacyTableSpec {
     SARF_KATEGORI("SARF_KATEGORI", null, "GUID", "GUID"),
     R_DEMIRBAS("R_DEMIRBAS", null, "GUID", "GUID"),
     R_SARFDEMIRBAS("R_SARFDEMIRBAS", null, "GUID", "GUID"),
-    R_APARAT("R_APARAT", null, "GUID", "GUID"),
     R_BARKOD("R_BARKOD", "ID", null, "ID"),
     R_DEMIRBAS_ACIKLAMA("R_DEMIRBAS_ACIKLAMA", "ID", null, "ID"),
     R_HAREKET("R_HAREKET", "ID", null, "ID"),

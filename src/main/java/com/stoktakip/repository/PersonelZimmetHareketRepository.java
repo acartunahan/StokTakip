@@ -10,11 +10,7 @@ public interface PersonelZimmetHareketRepository extends JpaRepository<PersonelZ
 
     Optional<PersonelZimmetHareket> findFirstByEnvanterGuidAndAktifTrueOrderByIdDesc(String guid);
 
-    Optional<PersonelZimmetHareket> findFirstByAparatGuidAndAktifTrueOrderByIdDesc(String guid);
-
     List<PersonelZimmetHareket> findByEnvanterGuidOrderByIdDesc(String guid);
-
-    List<PersonelZimmetHareket> findByAparatGuidOrderByIdDesc(String guid);
 
     @Query(value = "SELECT PERSONEL_ZIMMET_HAREKET_SEQ.NEXTVAL FROM DUAL", nativeQuery = true)
     Long nextId();

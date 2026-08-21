@@ -4,7 +4,6 @@ import com.stoktakip.dto.DepoTransferTalebi;
 import com.stoktakip.dto.IadeTalebi;
 import com.stoktakip.dto.ZimmetHareketYaniti;
 import com.stoktakip.dto.ZimmetTalebi;
-import com.stoktakip.enums.ZimmetVarlikTuru;
 import com.stoktakip.service.ZimmetService;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -44,19 +43,13 @@ public class ZimmetController {
         return zimmetService.depoyaTasi(talep);
     }
 
-    @GetMapping("/{tur}/{guid}/personel-hareketleri")
-    public List<ZimmetHareketYaniti> personelGecmisi(
-        @PathVariable ZimmetVarlikTuru tur,
-        @PathVariable String guid
-    ) {
-        return zimmetService.personelGecmisi(tur, guid);
+    @GetMapping("/envanter/{guid}/personel-hareketleri")
+    public List<ZimmetHareketYaniti> personelGecmisi(@PathVariable String guid) {
+        return zimmetService.personelGecmisi(guid);
     }
 
-    @GetMapping("/{tur}/{guid}/depo-hareketleri")
-    public List<ZimmetHareketYaniti> depoGecmisi(
-        @PathVariable ZimmetVarlikTuru tur,
-        @PathVariable String guid
-    ) {
-        return zimmetService.depoGecmisi(tur, guid);
+    @GetMapping("/envanter/{guid}/depo-hareketleri")
+    public List<ZimmetHareketYaniti> depoGecmisi(@PathVariable String guid) {
+        return zimmetService.depoGecmisi(guid);
     }
 }

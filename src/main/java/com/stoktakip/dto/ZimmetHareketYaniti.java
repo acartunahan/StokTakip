@@ -1,13 +1,11 @@
 package com.stoktakip.dto;
 
 import com.stoktakip.enums.ZimmetHareketTipi;
-import com.stoktakip.enums.ZimmetVarlikTuru;
 import java.time.LocalDateTime;
 
 public record ZimmetHareketYaniti(
     Long id,
-    ZimmetVarlikTuru varlikTuru,
-    String varlikGuid,
+    String envanterGuid,
     String envanterTuru,
     ZimmetHareketTipi hareketTipi,
     String personelKodu,

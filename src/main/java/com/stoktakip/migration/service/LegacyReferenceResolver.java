@@ -3,7 +3,6 @@ package com.stoktakip.migration.service;
 import com.stoktakip.entity.Marka;
 import com.stoktakip.entity.Kategori;
 import com.stoktakip.entity.Firma;
-import com.stoktakip.entity.TuketimCinsi;
 import com.stoktakip.entity.Depo;
 import com.stoktakip.entity.Envanter;
 import com.stoktakip.entity.Model;
@@ -13,7 +12,6 @@ import com.stoktakip.migration.core.LegacyRow;
 import com.stoktakip.migration.core.MigrationContext;
 import com.stoktakip.repository.MarkaRepository;
 import com.stoktakip.repository.FirmaRepository;
-import com.stoktakip.repository.TuketimCinsiRepository;
 import com.stoktakip.repository.DepoRepository;
 import com.stoktakip.repository.EnvanterRepository;
 import com.stoktakip.repository.LegacyAwareRepository;
@@ -33,7 +31,6 @@ public class LegacyReferenceResolver {
     private final ModelRepository modelRepository;
     private final FirmaRepository firmaRepository;
     private final IhaleRepository ihaleRepository;
-    private final TuketimCinsiRepository tuketimCinsiRepository;
     private final KategoriRepository kategoriRepository;
     private final EnvanterRepository envanterRepository;
     private final SayimRepository sayimRepository;
@@ -45,7 +42,6 @@ public class LegacyReferenceResolver {
         ModelRepository modelRepository,
         FirmaRepository firmaRepository,
         IhaleRepository ihaleRepository,
-        TuketimCinsiRepository tuketimCinsiRepository,
         KategoriRepository kategoriRepository,
         EnvanterRepository envanterRepository,
         SayimRepository sayimRepository,
@@ -56,7 +52,6 @@ public class LegacyReferenceResolver {
         this.modelRepository = modelRepository;
         this.firmaRepository = firmaRepository;
         this.ihaleRepository = ihaleRepository;
-        this.tuketimCinsiRepository = tuketimCinsiRepository;
         this.kategoriRepository = kategoriRepository;
         this.envanterRepository = envanterRepository;
         this.sayimRepository = sayimRepository;
@@ -97,10 +92,6 @@ public class LegacyReferenceResolver {
 
     public Kategori sabitKod(MigrationContext context, LegacyRow row, String column) {
         return coz(context, row, column, "RESAT_SABIT_KOD", row.string(column), kategoriRepository);
-    }
-
-    public TuketimCinsi tuketimCinsi(MigrationContext context, LegacyRow row, String column) {
-        return coz(context, row, column, "R_TUKETIMCINSLERI", row.string(column), tuketimCinsiRepository);
     }
 
     public Kategori category(MigrationContext context, LegacyRow row, String column) {

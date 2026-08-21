@@ -15,9 +15,9 @@ Veri/backfill amacli opsiyonel dosyalar:
 - `009_move_envanter_barkod_to_envanter.sql`: Daha once `ENVANTER_BARKOD` hedef tablosu olusmus semalarda barkod degerini `ENVANTER.BARKOD` kolonuna tasir ve eski hedef tabloyu kaldirir. Yeni kurulumda calistirilmaz.
 - `010_split_envanter_detay_identity.sql`: Daha once `ENVANTER_DETAY.GUID` ayni anda hem PK hem `ENVANTER(GUID)` FK olarak olusmus semalarda `ENVANTER_GUID` kolonunu ekler ve one-to-one FK'yi bu kolona tasir. Yeni kurulumda calistirilmaz.
 - `011_update_kategori_parent_fk.sql`: Daha once `KATEGORI.PARENT` self-FK constraint'i eski adla olusmus semalarda constraint adini `FK_KATEGORI_PARENT_GUID` olacak sekilde duzeltir ve parent index'ini garanti eder. Yeni kurulumda calistirilmaz.
-- `013_remove_obsolete_asset.sql`: Onceki surumun kaldirdigi varlik turunu iceren hedef semalarda ilgili hareketleri, audit eslemelerini, kolonlari ve tabloyu kalici olarak temizler. Yeni kurulumda calistirilmaz; calistirmadan once yedek alinmalidir.
+- `013_enable_aparat_zimmet_existing_schema.sql`: Envanter-only zimmet semasi daha once kurulmus hedef veritabanlarina `APARAT` tablosunu ve iki hareket tablosundaki `APARAT_GUID` baglantilarini ekler. Yeni kurulumda calistirilmaz.
 
-`012_extend_zimmet.sql` hem yeni hem mevcut hedef semalarda bir kez calistirilir. Yalnizca Envanter tabanli zimmet kolonlarini, index'i ve yeni hareket ID sequence'lerini ekler; legacy semaya veya veri goc tablolariyla verilerine dokunmaz. Onceki genisletme dosyasi daha once calistirildiysa once `013_remove_obsolete_asset.sql` calistirilir, sonra uygulama baslatilir.
+`012_extend_zimmet.sql` yeni kurulumda bir kez calistirilir. Envanter veya Aparat hedefleyen zimmet kolonlarini, constraint/index'leri ve yeni hareket ID sequence'lerini ekler; legacy semaya veya veri goc verilerine dokunmaz. Envanter-only `012` dosyasi daha once calistirildiysa yeni `012` tekrar calistirilmaz; onun yerine `013_enable_aparat_zimmet_existing_schema.sql` kullanilir.
 
 Legacy test verisi icin:
 

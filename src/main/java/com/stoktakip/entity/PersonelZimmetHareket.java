@@ -23,8 +23,12 @@ public class PersonelZimmetHareket extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ENVANTER_GUID", referencedColumnName = "GUID", nullable = false)
+    @JoinColumn(name = "ENVANTER_GUID", referencedColumnName = "GUID")
     private Envanter envanter;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "APARAT_GUID", referencedColumnName = "GUID")
+    private Aparat aparat;
 
     @Column(name = "PERSONEL_KODU", length = 100)
     private String personelKodu;
@@ -58,6 +62,14 @@ public class PersonelZimmetHareket extends BaseEntity {
         this.envanter = envanter;
     }
 
+    public Aparat getAparat() {
+        return aparat;
+    }
+
+    public void setAparat(Aparat aparat) {
+        this.aparat = aparat;
+    }
+
     public String getPersonelKodu() { return personelKodu; }
     public void setPersonelKodu(String personelKodu) { this.personelKodu = personelKodu; }
     public ZimmetHareketTipi getHareketTipi() { return hareketTipi; }
@@ -89,9 +101,9 @@ public class PersonelZimmetHareket extends BaseEntity {
 
     @PrePersist
     @PreUpdate
-    private void envanterIliskisiniDogrula() {
-        if (envanter == null) {
-            throw new IllegalStateException("Personel zimmet hareketi bir envantere bagli olmalidir");
+    private void varlikIliskisiniDogrula() {
+        if ((envanter == null) == (aparat == null)) {
+            throw new IllegalStateException("Personel zimmet hareketi tam olarak bir varliga bagli olmalidir");
         }
     }
 }

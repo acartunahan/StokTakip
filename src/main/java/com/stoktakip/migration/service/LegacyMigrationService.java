@@ -6,7 +6,6 @@ import com.stoktakip.entity.DepoZimmetHareket;
 import com.stoktakip.entity.Marka;
 import com.stoktakip.entity.Kategori;
 import com.stoktakip.entity.Firma;
-import com.stoktakip.entity.TuketimCinsi;
 import com.stoktakip.entity.Depo;
 import com.stoktakip.entity.EnvanterDetay;
 import com.stoktakip.entity.Envanter;
@@ -33,7 +32,6 @@ import com.stoktakip.migration.repository.MigrationIdMapRepository;
 import com.stoktakip.repository.DepoZimmetHareketRepository;
 import com.stoktakip.repository.MarkaRepository;
 import com.stoktakip.repository.FirmaRepository;
-import com.stoktakip.repository.TuketimCinsiRepository;
 import com.stoktakip.repository.DepoRepository;
 import com.stoktakip.repository.EnvanterRepository;
 import com.stoktakip.repository.EnvanterAciklamaRepository;
@@ -81,11 +79,9 @@ public class LegacyMigrationService {
         LegacyTableSpec.SARF_MODEL,
         LegacyTableSpec.RESAT_FIRMA,
         LegacyTableSpec.SARF_FIRMA,
-        LegacyTableSpec.R_TUKETIMCINSLERI,
         LegacyTableSpec.SARF_KATEGORI,
         LegacyTableSpec.RESAT_IHALE,
         LegacyTableSpec.R_DEMIRBAS,
-        LegacyTableSpec.R_SARFDEMIRBAS,
         LegacyTableSpec.R_BARKOD,
         LegacyTableSpec.R_DEMIRBAS_ACIKLAMA,
         LegacyTableSpec.R_HAREKET,
@@ -110,7 +106,6 @@ public class LegacyMigrationService {
     private final ModelRepository modelRepository;
     private final FirmaRepository firmaRepository;
     private final IhaleRepository ihaleRepository;
-    private final TuketimCinsiRepository tuketimCinsiRepository;
     private final KategoriRepository kategoriRepository;
     private final EnvanterRepository envanterRepository;
     private final EnvanterAciklamaRepository envanterAciklamaRepository;
@@ -136,7 +131,6 @@ public class LegacyMigrationService {
         ModelRepository modelRepository,
         FirmaRepository firmaRepository,
         IhaleRepository ihaleRepository,
-        TuketimCinsiRepository tuketimCinsiRepository,
         KategoriRepository kategoriRepository,
         EnvanterRepository envanterRepository,
         EnvanterAciklamaRepository envanterAciklamaRepository,
@@ -161,7 +155,6 @@ public class LegacyMigrationService {
         this.modelRepository = modelRepository;
         this.firmaRepository = firmaRepository;
         this.ihaleRepository = ihaleRepository;
-        this.tuketimCinsiRepository = tuketimCinsiRepository;
         this.kategoriRepository = kategoriRepository;
         this.envanterRepository = envanterRepository;
         this.envanterAciklamaRepository = envanterAciklamaRepository;
@@ -299,10 +292,8 @@ public class LegacyMigrationService {
             case SARF_FIRMA -> sarfFirmayiAktar(context, row);
             case RESAT_IHALE -> ihaleyiAktar(context, row);
             case RESAT_SABIT_KOD -> sabitKoduAktar(context, row);
-            case R_TUKETIMCINSLERI -> tuketimCinsiniAktar(context, row);
             case SARF_KATEGORI -> kategoriyiAktar(context, row);
             case R_DEMIRBAS -> demirbasiAktar(context, row);
-            case R_SARFDEMIRBAS -> sarfiAktar(context, row);
             case R_BARKOD -> barkoduAktar(context, row);
             case R_DEMIRBAS_ACIKLAMA -> notuAktar(context, row);
             case R_HAREKET -> hareketiAktar(context, row);
@@ -423,13 +414,6 @@ public class LegacyMigrationService {
         }, columns("GUID", "PARENT", "AD", "DURUM", "K_TARIH"));
     }
 
-    private void tuketimCinsiniAktar(MigrationContext context, LegacyRow row) {
-        yazici.yaz(context, row, "TuketimCinsi", tuketimCinsiRepository, TuketimCinsi::new, type -> {
-            type.setAd(varsayilanMetin(row.string("ADI"), row.anahtar()));
-            type.setAciklama(row.string("ACIKLAMA"));
-        }, columns("GUID", "ADI", "ACIKLAMA", "DURUM", "K_TARIH"));
-    }
-
     private void kategoriyiAktar(MigrationContext context, LegacyRow row) {
         yazici.yaz(context, row, "Kategori", kategoriRepository, Kategori::new, kategori -> {
             alanYaz(kategori, "parent", kategoriParentiniCoz(context, row));
@@ -488,20 +472,6 @@ public class LegacyMigrationService {
             "ALIM_YOLU", "M_ADI", "MARKA", "MODEL", "IHALE_ID", "G_BAS_TAR",
             "G_BIT_TAR", "ACIKLAMA", "DURUM", "K_TARIH", "SAYMANLIKNO", "PERSZIMMET",
             "ILSUBEDBASNO", "ALIM_TUR"));
-    }
-
-    private void sarfiAktar(MigrationContext context, LegacyRow row) {
-        yazici.yaz(context, row, "Envanter", envanterRepository, Envanter::new, item -> {
-            alanYaz(item, "envanterTuru", EnvanterTuru.SARF);
-            alanYaz(item, "envanterAdi", varsayilanMetin(row.string("TUR"), row.anahtar()));
-            alanYaz(item, "seriNo", sinirliMetin(context, row, "SERINO", 100));
-            alanYaz(item, "aciklama", row.string("ACIKLAMA"));
-            alanYaz(item, "model", cozucu.sarfModel(context, row, "MODEL"));
-            alanYaz(item, "depo", cozucu.depot(context, row, "ALANDEPO"));
-            EnvanterDetay detail = envanterDetayiOlustur(item);
-            alanYaz(detail, "firma", cozucu.sarfCompany(context, row, "FIRMA"));
-        }, columns("GUID", "ADI", "MARKA", "MODEL", "ADET", "TUR",
-            "FIRMA", "SERINO", "A_TARIH", "ACIKLAMA", "DURUM", "K_TARIH", "ALANDEPO"));
     }
 
     private void barkoduAktar(MigrationContext context, LegacyRow row) {
@@ -824,9 +794,8 @@ public class LegacyMigrationService {
             case RESAT_FIRMA, SARF_FIRMA -> firmaRepository.count();
             case RESAT_IHALE -> ihaleRepository.count();
             case RESAT_SABIT_KOD -> kategoriRepository.count();
-            case R_TUKETIMCINSLERI -> tuketimCinsiRepository.count();
             case SARF_KATEGORI -> kategoriRepository.count();
-            case R_DEMIRBAS, R_SARFDEMIRBAS -> envanterRepository.count();
+            case R_DEMIRBAS -> envanterRepository.count();
             case R_BARKOD -> envanterRepository.countByBarkodIsNotNull();
             case R_DEMIRBAS_ACIKLAMA -> envanterAciklamaRepository.count();
             case R_HAREKET -> depoZimmetHareketRepository.count() + personelZimmetHareketRepository.count();

@@ -23,8 +23,12 @@ public class DepoZimmetHareket extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ENVANTER_GUID", referencedColumnName = "GUID", nullable = false)
+    @JoinColumn(name = "ENVANTER_GUID", referencedColumnName = "GUID")
     private Envanter envanter;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "APARAT_GUID", referencedColumnName = "GUID")
+    private Aparat aparat;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "HAREKET_TIPI", length = 32)
@@ -61,6 +65,14 @@ public class DepoZimmetHareket extends BaseEntity {
 
     public void setEnvanter(Envanter envanter) {
         this.envanter = envanter;
+    }
+
+    public Aparat getAparat() {
+        return aparat;
+    }
+
+    public void setAparat(Aparat aparat) {
+        this.aparat = aparat;
     }
 
     public ZimmetHareketTipi getHareketTipi() { return hareketTipi; }
@@ -108,9 +120,9 @@ public class DepoZimmetHareket extends BaseEntity {
 
     @PrePersist
     @PreUpdate
-    private void envanterIliskisiniDogrula() {
-        if (envanter == null) {
-            throw new IllegalStateException("Depo zimmet hareketi bir envantere bagli olmalidir");
+    private void varlikIliskisiniDogrula() {
+        if ((envanter == null) == (aparat == null)) {
+            throw new IllegalStateException("Depo zimmet hareketi tam olarak bir varliga bagli olmalidir");
         }
     }
 }

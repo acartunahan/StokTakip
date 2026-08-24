@@ -16,6 +16,7 @@ Veri/backfill amacli opsiyonel dosyalar:
 - `010_split_envanter_detay_identity.sql`: Daha once `ENVANTER_DETAY.GUID` ayni anda hem PK hem `ENVANTER(GUID)` FK olarak olusmus semalarda `ENVANTER_GUID` kolonunu ekler ve one-to-one FK'yi bu kolona tasir. Yeni kurulumda calistirilmaz.
 - `011_update_kategori_parent_fk.sql`: Daha once `KATEGORI.PARENT` self-FK constraint'i eski adla olusmus semalarda constraint adini `FK_KATEGORI_PARENT_GUID` olacak sekilde duzeltir ve parent index'ini garanti eder. Yeni kurulumda calistirilmaz.
 - `013_enable_aparat_zimmet_existing_schema.sql`: Envanter-only zimmet semasi daha once kurulmus hedef veritabanlarina `APARAT` tablosunu ve iki hareket tablosundaki `APARAT_GUID` baglantilarini ekler. Yeni kurulumda calistirilmaz.
+- `014_remove_tuketim_cinsi_and_fix_sarf_hareket.sql`: Mevcut hedef semalarda yanlislikla olusturulmus `TUKETIM_CINSI` tablosunu kaldirir ve `DEPO_ZIMMET_HAREKET.ADET/TUR` kolonlarini garanti eder. Legacy semada calistirilmaz.
 
 `012_extend_zimmet.sql` yeni kurulumda bir kez calistirilir. Envanter veya Aparat hedefleyen zimmet kolonlarini, constraint/index'leri ve yeni hareket ID sequence'lerini ekler; legacy semaya veya veri goc verilerine dokunmaz. Envanter-only `012` dosyasi daha once calistirildiysa yeni `012` tekrar calistirilmaz; onun yerine `013_enable_aparat_zimmet_existing_schema.sql` kullanilir.
 

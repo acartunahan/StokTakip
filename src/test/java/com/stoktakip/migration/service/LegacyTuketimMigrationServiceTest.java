@@ -16,6 +16,7 @@ import com.stoktakip.entity.EnvanterDetay;
 import com.stoktakip.entity.Firma;
 import com.stoktakip.entity.Model;
 import com.stoktakip.enums.EnvanterTuru;
+import com.stoktakip.enums.ZimmetHareketTipi;
 import com.stoktakip.migration.core.LegacyRow;
 import com.stoktakip.migration.core.LegacyTableSpec;
 import com.stoktakip.migration.core.MigrationContext;
@@ -108,7 +109,8 @@ class LegacyTuketimMigrationServiceTest {
         LegacyRow row = row(LegacyTableSpec.R_SARFDEMIRBAS, Map.of(
             "ID", 20L,
             "GUID", "HRK-00000001",
-            "ADI", "TUK-00000001",
+            "ADIR_TUKETIMCINSLERIGUID", "TUK-00000001",
+            "ALANDEPOGUID", "DEPO-0000001",
             "ADET", "-1",
             "TUR", "giden",
             "ACIKLAMA", "Toner cikisi",
@@ -119,11 +121,11 @@ class LegacyTuketimMigrationServiceTest {
         depo.setGuid("DEPO-0000001");
         Envanter envanter = new Envanter();
         envanter.setGuid("TUK-00000001");
-        envanter.setDepo(depo);
         when(idMapRepository.findByEskiTabloAdiAndEskiAnahtarAndHedefVarlikAdi(
             "R_SARFDEMIRBAS", "GUID:HRK-00000001", "DepoZimmetHareket"
         )).thenReturn(Optional.empty());
-        when(cozucu.sarfInventory(context, row, "ADI")).thenReturn(envanter);
+        when(cozucu.sarfInventory(context, row, "ADIR_TUKETIMCINSLERIGUID")).thenReturn(envanter);
+        when(cozucu.depot(context, row, "ALANDEPOGUID")).thenReturn(depo);
         when(depoZimmetHareketRepository.nextId()).thenReturn(1_000_000_000_100L);
         when(depoZimmetHareketRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(idMapRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -141,6 +143,7 @@ class LegacyTuketimMigrationServiceTest {
         DepoZimmetHareket hareket = captor.getValue();
         assertThat(hareket.getId()).isEqualTo(1_000_000_000_100L);
         assertThat(hareket.getEnvanter()).isSameAs(envanter);
+        assertThat(hareket.getHareketTipi()).isEqualTo(ZimmetHareketTipi.DEPO_TRANSFERI);
         assertThat(hareket.getAdet()).isEqualTo(-1L);
         assertThat(hareket.getTur()).isEqualTo("giden");
         assertThat(hareket.getMevcutDepo()).isSameAs(depo);
@@ -158,7 +161,8 @@ class LegacyTuketimMigrationServiceTest {
         LegacyRow row = row(LegacyTableSpec.R_SARFDEMIRBAS, Map.of(
             "ID", 21L,
             "GUID", "HRK-00000002",
-            "ADI", "TUK-00000001",
+            "ADIR_TUKETIMCINSLERIGUID", "TUK-00000001",
+            "ALANDEPOGUID", "DEPO-0000001",
             "ADET", "1",
             "TUR", "gelen"
         ));
@@ -170,6 +174,116 @@ class LegacyTuketimMigrationServiceTest {
 
         verify(cozucu, never()).sarfInventory(any(), any(), any());
         verify(depoZimmetHareketRepository, never()).save(any());
+    }
+
+    @Test
+    void sarfHareketiSatirdakiDepoGuidIleGelenHareketOlarakEslenir() throws Exception {
+        MigrationContext context = new MigrationContext(4L, false);
+        LegacyRow row = row(LegacyTableSpec.R_SARFDEMIRBAS, Map.of(
+            "ID", 22L,
+            "GUID", "HRK-00000003",
+            "ADIR_TUKETIMCINSLERIGUID", "TUK-00000001",
+            "ALANDEPOGUID", "DEPO-0000002",
+            "ADET", "2",
+            "TUR", "gelen"
+        ));
+        Envanter envanter = new Envanter();
+        envanter.setGuid("TUK-00000001");
+        Depo depo = new Depo();
+        depo.setGuid("DEPO-0000002");
+        when(cozucu.sarfInventory(context, row, "ADIR_TUKETIMCINSLERIGUID")).thenReturn(envanter);
+        when(cozucu.depot(context, row, "ALANDEPOGUID")).thenReturn(depo);
+        when(depoZimmetHareketRepository.nextId()).thenReturn(1_000_000_000_101L);
+        when(depoZimmetHareketRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(idMapRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        doAnswer(invocation -> {
+            @SuppressWarnings("unchecked")
+            Consumer<TransactionStatus> callback = invocation.getArgument(0);
+            callback.accept(null);
+            return null;
+        }).when(transactionTemplate).executeWithoutResult(any());
+
+        invoke("sarfHareketiniAktar", context, row);
+
+        ArgumentCaptor<DepoZimmetHareket> captor = ArgumentCaptor.forClass(DepoZimmetHareket.class);
+        verify(depoZimmetHareketRepository).save(captor.capture());
+        assertThat(captor.getValue().getGidecegiDepo()).isSameAs(depo);
+        assertThat(captor.getValue().getMevcutDepo()).isNull();
+        assertThat(captor.getValue().getAdet()).isEqualTo(2L);
+    }
+
+    @Test
+    void depoEslesmeyenSarfHareketiAuditEdilerekAtlanir() throws Exception {
+        MigrationContext context = new MigrationContext(5L, false);
+        LegacyRow row = row(LegacyTableSpec.R_SARFDEMIRBAS, Map.of(
+            "ID", 23L,
+            "GUID", "HRK-00000004",
+            "ADIR_TUKETIMCINSLERIGUID", "TUK-00000001",
+            "ALANDEPOGUID", "DEPO-YOK-0001",
+            "ADET", "1",
+            "TUR", "giden"
+        ));
+        Envanter envanter = new Envanter();
+        when(cozucu.sarfInventory(context, row, "ADIR_TUKETIMCINSLERIGUID")).thenReturn(envanter);
+        when(cozucu.depot(context, row, "ALANDEPOGUID")).thenReturn(null);
+
+        invoke("sarfHareketiniAktar", context, row);
+
+        verify(depoZimmetHareketRepository, never()).save(any());
+        assertThat(context.ozetJson()).contains("\"atlananSatirSayisi\":1");
+    }
+
+    @Test
+    void envanterEslesmeyenSarfHareketiAuditEdilerekAtlanir() throws Exception {
+        MigrationContext context = new MigrationContext(7L, false);
+        LegacyRow row = row(LegacyTableSpec.R_SARFDEMIRBAS, Map.of(
+            "ID", 25L,
+            "GUID", "HRK-00000006",
+            "ADIR_TUKETIMCINSLERIGUID", "TUK-YOK-00001",
+            "ALANDEPOGUID", "DEPO-0000001",
+            "ADET", "1",
+            "TUR", "giden"
+        ));
+        when(cozucu.sarfInventory(context, row, "ADIR_TUKETIMCINSLERIGUID")).thenReturn(null);
+
+        invoke("sarfHareketiniAktar", context, row);
+
+        verify(cozucu, never()).depot(any(), any(), any());
+        verify(depoZimmetHareketRepository, never()).save(any());
+        assertThat(context.ozetJson()).contains("\"atlananSatirSayisi\":1");
+    }
+
+    @Test
+    void bozukAdetTumMigrationiDurdurmadanNullAktarilir() throws Exception {
+        MigrationContext context = new MigrationContext(6L, false);
+        LegacyRow row = row(LegacyTableSpec.R_SARFDEMIRBAS, Map.of(
+            "ID", 24L,
+            "GUID", "HRK-00000005",
+            "ADIR_TUKETIMCINSLERIGUID", "TUK-00000001",
+            "ALANDEPOGUID", "DEPO-0000001",
+            "ADET", "sayi-degil",
+            "TUR", "giden"
+        ));
+        Envanter envanter = new Envanter();
+        Depo depo = new Depo();
+        when(cozucu.sarfInventory(context, row, "ADIR_TUKETIMCINSLERIGUID")).thenReturn(envanter);
+        when(cozucu.depot(context, row, "ALANDEPOGUID")).thenReturn(depo);
+        when(depoZimmetHareketRepository.nextId()).thenReturn(1_000_000_000_102L);
+        when(depoZimmetHareketRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(idMapRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        doAnswer(invocation -> {
+            @SuppressWarnings("unchecked")
+            Consumer<TransactionStatus> callback = invocation.getArgument(0);
+            callback.accept(null);
+            return null;
+        }).when(transactionTemplate).executeWithoutResult(any());
+
+        invoke("sarfHareketiniAktar", context, row);
+
+        ArgumentCaptor<DepoZimmetHareket> captor = ArgumentCaptor.forClass(DepoZimmetHareket.class);
+        verify(depoZimmetHareketRepository).save(captor.capture());
+        assertThat(captor.getValue().getAdet()).isNull();
+        verify(denetimServisi).hata(eq(context), eq(row), eq("ADET"), any(), any());
     }
 
     private void invoke(String methodName, MigrationContext context, LegacyRow row) throws Exception {

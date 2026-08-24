@@ -2,6 +2,7 @@ package com.stoktakip.migration.service;
 
 import com.stoktakip.enums.SayimKapsami;
 import com.stoktakip.enums.EnvanterTuru;
+import com.stoktakip.enums.ZimmetHareketTipi;
 import com.stoktakip.entity.DepoZimmetHareket;
 import com.stoktakip.entity.Marka;
 import com.stoktakip.entity.Kategori;
@@ -56,11 +57,14 @@ import java.util.HexFormat;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -69,6 +73,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class LegacyMigrationService {
 
     private static final HexFormat HEX_FORMAT = HexFormat.of();
+    private static final Logger log = LoggerFactory.getLogger(LegacyMigrationService.class);
 
     private static final LegacyTableSpec[] VERI_GOC_SIRASI = {
         LegacyTableSpec.RESAT_DEPO,
@@ -502,17 +507,60 @@ public class LegacyMigrationService {
             return;
         }
 
-        Envanter envanter = cozucu.sarfInventory(context, row, "ADI");
+        String envanterGuidKolonu = sarfEnvanterGuidKolonu(row);
+        Envanter envanter = cozucu.sarfInventory(context, row, envanterGuidKolonu);
         if (envanter == null) {
-            if (row.string("ADI") == null) {
+            if (row.string(envanterGuidKolonu) == null) {
                 denetimServisi.hata(
                     context,
                     row,
-                    "ADI",
-                    "R_SARFDEMIRBAS.ADI bos oldugu icin ilgili Envanter bulunamadi.",
+                    envanterGuidKolonu,
+                    "R_SARFDEMIRBAS." + envanterGuidKolonu
+                        + " bos oldugu icin ilgili Envanter bulunamadi.",
                     null
                 );
             }
+            log.warn(
+                "R_SARFDEMIRBAS satiri Envanter eslesmesi bulunamadigi icin atlandi: anahtar={}, kolon={}, guid={}",
+                row.anahtar(), envanterGuidKolonu, row.string(envanterGuidKolonu)
+            );
+            context.stats(row.tabloAdi()).atlandi();
+            return;
+        }
+
+        String depoGuidKolonu = sarfDepoGuidKolonu(row);
+        Depo depo = cozucu.depot(context, row, depoGuidKolonu);
+        if (depo == null) {
+            if (row.string(depoGuidKolonu) == null) {
+                denetimServisi.hata(
+                    context,
+                    row,
+                    depoGuidKolonu,
+                    "R_SARFDEMIRBAS." + depoGuidKolonu + " bos oldugu icin ilgili Depo bulunamadi.",
+                    null
+                );
+            }
+            log.warn(
+                "R_SARFDEMIRBAS satiri Depo eslesmesi bulunamadigi icin atlandi: anahtar={}, kolon={}, guid={}",
+                row.anahtar(), depoGuidKolonu, row.string(depoGuidKolonu)
+            );
+            context.stats(row.tabloAdi()).atlandi();
+            return;
+        }
+
+        String tur = sinirliMetin(context, row, "TUR", 20);
+        if (!sarfHareketTuruGecerliMi(tur)) {
+            denetimServisi.hata(
+                context,
+                row,
+                "TUR",
+                "R_SARFDEMIRBAS.TUR gelen/giden hareketine donusturulemedi: " + tur,
+                null
+            );
+            log.warn(
+                "R_SARFDEMIRBAS satiri gecersiz TUR nedeniyle atlandi: anahtar={}, tur={}",
+                row.anahtar(), tur
+            );
             context.stats(row.tabloAdi()).atlandi();
             return;
         }
@@ -522,22 +570,50 @@ public class LegacyMigrationService {
             hareket.setId(depoZimmetHareketRepository.nextId());
         }
         hareket.setEnvanter(envanter);
+        hareket.setHareketTipi(ZimmetHareketTipi.DEPO_TRANSFERI);
         hareket.setZimmetTuru(EnvanterTuru.SARF.name());
         hareket.setAdet(guvenliLong(context, row, "ADET"));
-        hareket.setTur(sinirliMetin(context, row, "TUR", 20));
+        hareket.setTur(tur);
         hareket.setAciklama(row.string("ACIKLAMA"));
         hareket.setAktif(aktifDegeri(row.string("DURUM")));
         hareket.setOlusturmaTarihi(row.dateTime("K_TARIH"));
-        sarfHareketDeposunuAta(hareket, envanter.getDepo());
+        sarfHareketDeposunuAta(hareket, depo);
         depoZimmetHareketiniKaydet(context, row, hareket, sarfHareketKolonlari());
     }
 
     private static void sarfHareketDeposunuAta(DepoZimmetHareket hareket, Depo depo) {
-        if ("gelen".equalsIgnoreCase(hareket.getTur())) {
+        if (sarfHareketiGelenMi(hareket.getTur())) {
             hareket.setGidecegiDepo(depo);
         } else {
             hareket.setMevcutDepo(depo);
         }
+    }
+
+    private static String sarfEnvanterGuidKolonu(LegacyRow row) {
+        return row.values().containsKey("ADIR_TUKETIMCINSLERIGUID")
+            ? "ADIR_TUKETIMCINSLERIGUID"
+            : "ADI";
+    }
+
+    private static String sarfDepoGuidKolonu(LegacyRow row) {
+        return row.values().containsKey("ALANDEPOGUID") ? "ALANDEPOGUID" : "ALANDEPO";
+    }
+
+    private static boolean sarfHareketTuruGecerliMi(String tur) {
+        if (tur == null) {
+            return false;
+        }
+        return switch (tur.trim().toUpperCase(Locale.ROOT)) {
+            case "GELEN", "GIRIS", "G", "1", "GIDEN", "CIKIS", "C", "-1" -> true;
+            default -> false;
+        };
+    }
+
+    private static boolean sarfHareketiGelenMi(String tur) {
+        return switch (tur.trim().toUpperCase(Locale.ROOT)) {
+            case "GELEN", "GIRIS", "G", "1" -> true;
+            default -> false;
+        };
     }
 
     private void barkoduAktar(MigrationContext context, LegacyRow row) {
@@ -775,7 +851,10 @@ public class LegacyMigrationService {
     }
 
     private static Set<String> sarfHareketKolonlari() {
-        return columns("ID", "GUID", "ADI", "ADET", "TUR", "ACIKLAMA", "DURUM", "K_TARIH");
+        return columns(
+            "ID", "GUID", "ADIR_TUKETIMCINSLERIGUID", "MARKAGUID", "MODELGUID", "ADET", "TUR",
+            "FIRMAGUID", "ALIM_TARIH", "ACIKLAMA", "DURUM", "K_TARIH", "ALANDEPOGUID"
+        );
     }
 
     private void sayimiAktar(MigrationContext context, LegacyRow row) {

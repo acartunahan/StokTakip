@@ -42,7 +42,7 @@ Eski sistemde foreign key constraint olmadığı için ilişkiler GUID kolonlar�
 | RESAT_SABIT_KOD, SARF_KATEGORI | Kategori | `TUR` ile ayrilir; `PARENT` GUID uzerinden self relation desteklenir |
 | R_DEMIRBAS | Envanter, EnvanterDetay | `EnvanterTuru.DEMIRBAS`; alim yolu/turu, saymanlik no, ihale ve garanti bilgileri detaydadir |
 | R_TUKETIMCINSLERI | Envanter, EnvanterDetay | `EnvanterTuru.SARF`; model, firma ve depo iliskileri cozulur |
-| R_SARFDEMIRBAS | DepoZimmetHareket | `ADI -> R_TUKETIMCINSLERI.GUID`; her satir ayri hareket, `ADET` ve `TUR` korunur |
+| R_SARFDEMIRBAS | DepoZimmetHareket | `ADIR_TUKETIMCINSLERIGUID -> R_TUKETIMCINSLERI.GUID`, `ALANDEPOGUID -> RESAT_DEPO.GUID`; her satir ayri hareket, `ADET` ve `TUR` korunur |
 | R_BARKOD | Envanter.BARKOD | Demirbas barkod kolonu |
 | R_HAREKET | DepoZimmetHareket, PersonelZimmetHareket | `NERDEN`/`NEREYE` durumuna gore zimmet hareketi |
 | R_SAYIM_GENEL, R_SAYIM_YEREL | SayimDetay | Detay kayıtları |

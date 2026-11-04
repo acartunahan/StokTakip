@@ -92,11 +92,12 @@ public class LegacyMigrationService {
         LegacyTableSpec.R_BARKOD,
         LegacyTableSpec.R_DEMIRBAS_ACIKLAMA,
         LegacyTableSpec.R_HAREKET,
-        LegacyTableSpec.R_SAYIM,
-        LegacyTableSpec.R_SAYIM_GENEL,
-        LegacyTableSpec.R_SAYIM_YEREL,
-        LegacyTableSpec.R_IADE_HAVUZU,
-        LegacyTableSpec.R_IADE_ONAY_HAVUZU,
+        // Sayim ve iade simdilik goce dahil edilmiyor.
+        // LegacyTableSpec.R_SAYIM,
+        // LegacyTableSpec.R_SAYIM_GENEL,
+        // LegacyTableSpec.R_SAYIM_YEREL,
+        // LegacyTableSpec.R_IADE_HAVUZU,
+        // LegacyTableSpec.R_IADE_ONAY_HAVUZU,
         LegacyTableSpec.SARF_LOG,
         LegacyTableSpec.R_SQL_KAYIT
     };
